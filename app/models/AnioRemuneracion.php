@@ -212,7 +212,7 @@ class AnioRemuneracion extends Eloquent {
         if($fecha<=$date && $fechaActual>=$fechaInicial && ($isIngresado || ($mes=="Enero" && $anio==2018) ) ){
             $disponible = true;
         }
-        return true;
+        
         return $disponible;
     }
     
@@ -225,7 +225,17 @@ class AnioRemuneracion extends Eloquent {
         
         return false;
     }
-
+    
+    public function isIndicadores($mes)
+    {
+        $bool = false;
+        $indicadores = MesDeTrabajo::where('mes', $mes)->first();        
+        if($indicadores){
+            $bool = $indicadores->indicadores ? true : false;
+        }
+        
+        return $bool;
+    }
     
     public function estadoMeses()
     {
@@ -237,15 +247,20 @@ class AnioRemuneracion extends Eloquent {
             $nombre = strtolower($mes['value']);
             $isIniciado = $this->isIniciado($mes['value']);
             $isDisponible = true;
+            $isIndicadores = false;
+            $fecha = Funciones::obtenerFechaMes($mes['value'], $anio);
             if(!$isIniciado){
                 $isDisponible = $this->isDisponible($mes['value']);
+            }else{
+                $isIndicadores = $this->isIndicadores($fecha);                
             }
             $estadoMeses[] = array(
                 'nombre' => $mes['value'],
                 'abierto' => $this->$nombre ? true : false,
                 'iniciado' => $isIniciado,
                 'disponible' => $isDisponible, 
-                'mes' => Funciones::obtenerFechaMes($mes['value'], $anio),
+                'indicadores' => $isIndicadores, 
+                'mes' => $fecha,
                 'fechaRemuneracion' => Funciones::obtenerFechaRemuneracion($mes['value'], $anio),
                 'isCentralizado' => AnioRemuneracion::isCentralizado(Funciones::obtenerFechaMes($mes['value'], $anio)),
                 'disponibleSinIndicadores' => $this->isDisponibleSinIndicadores($mes['value'])

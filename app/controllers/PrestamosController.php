@@ -70,6 +70,7 @@ class PrestamosController extends \BaseController {
             $prestamo->trabajador_id = $datos['trabajador_id'];
             //$prestamo->fecha = $datos['fecha'];
             $prestamo->glosa = $datos['glosa'];
+            $prestamo->codigo = $datos['codigo'];
             $prestamo->nombre_liquidacion = $datos['nombre_liquidacion'];
             $prestamo->prestamo_caja = $datos['prestamo_caja'];
             $prestamo->leassing_caja = $datos['leassing_caja'];
@@ -133,6 +134,7 @@ class PrestamosController extends \BaseController {
             //'fecha' => $prestamo->fecha,
             'primeraCuota' => $prestamo->primera_cuota,
             'glosa' => $prestamo->glosa,
+            'codigo' => $prestamo->codigo,
             'nombreLiquidacion' => $prestamo->nombre_liquidacion,
             'prestamoCaja' => $prestamo->prestamo_caja ? true : false,
             'leassingCaja' => $prestamo->leassing_caja ? true : false,
@@ -174,6 +176,7 @@ class PrestamosController extends \BaseController {
             $prestamo->trabajador_id = $datos['trabajador_id'];
             //$prestamo->fecha = $datos['fecha'];
             $prestamo->glosa = $datos['glosa'];
+            $prestamo->codigo = $datos['codigo'];
             $prestamo->nombre_liquidacion = $datos['nombre_liquidacion'];
             $prestamo->prestamo_caja = $datos['prestamo_caja'];
             $prestamo->leassing_caja = $datos['leassing_caja'];
@@ -257,9 +260,11 @@ class PrestamosController extends \BaseController {
     
     public function get_datos_formulario(){
         $datos = array(
+            'id' => Input::get('id'),
             'trabajador_id' => Input::get('idTrabajador'),
             //'fecha' => Input::get('fecha'),
             'glosa' => Input::get('glosa'),
+            'codigo' => Input::get('codigo'),
             'nombre_liquidacion' => Input::get('nombreLiquidacion'),
             'prestamo_caja' => Input::get('prestamoCaja'),
             'leassing_caja' => Input::get('leassingCaja'),

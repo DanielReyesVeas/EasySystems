@@ -3716,7 +3716,7 @@ class TrabajadoresController extends \BaseController {
                         'rutFormato' => $liquidacion->trabajador->rut_formato(),
                         'apellidos' => ucwords(strtolower($liquidacion->trabajador_apellidos)),
                         'cargoOrden' => ucwords(strtolower($liquidacion->trabajador_cargo)),
-                        'nombreCompleto' => $liquidacion->trabajador_nombres . ' ' . $liquidacion->trabajador_apellidos,
+                        'nombreCompleto' => $liquidacion->nombreCompleto(),
                         'cargo' => $liquidacion->trabajador_cargo,              
                         'sueldoBasePesos' => $liquidacion->sueldo_base,
                         'sueldoLiquido' => $liquidacion->sueldo_liquido,
@@ -3735,7 +3735,7 @@ class TrabajadoresController extends \BaseController {
                             'rutFormato' => $liquidacion->trabajador->rut_formato(),
                             'apellidos' => ucwords(strtolower($liquidacion->trabajador_apellidos)),
                             'cargoOrden' => ucwords(strtolower($liquidacion->trabajador_cargo)),
-                            'nombreCompleto' => $liquidacion->trabajador_nombres . ' ' . $liquidacion->trabajador_apellidos,
+                            'nombreCompleto' => $liquidacion->nombreCompleto(),
                             'cargo' => $liquidacion->trabajador_cargo,              
                             'sueldoBasePesos' => $liquidacion->sueldo_base,
                             'sueldoLiquido' => $liquidacion->sueldo_liquido,
@@ -3873,10 +3873,10 @@ class TrabajadoresController extends \BaseController {
                     $declaracion->save();
                                         
                     $filenamePDF = 'certificado.pdf';
-                    $destination = public_path() . '/stories/' . $filenamePDF;
+                    /*$destination = public_path() . '/stories/' . $filenamePDF;
                     $pdf = new \Thujohn\Pdf\Pdf();
                     $content = $pdf->load(View::make('pdf.certificado', array('datos' => $resumen, 'empresa' => $empresa, 'folio' => $folio)), 'A4', 'landscape')->output();          
-                    File::put($destination, $content); 
+                    File::put($destination, $content); */
                     
                     $lista[] = array(
                         'id' => $trabajador->id,
@@ -6965,6 +6965,7 @@ class TrabajadoresController extends \BaseController {
         $cliente = Config::get('cliente.CLIENTE.EMPRESA');
         $configuracion = \Session::get('configuracion');
         $logo = $empresa->logo ? URL::to("stories/".$empresa->logo) : NULL;
+        $isValida = $mes->indicadores;
         
         foreach($trabajadores as $trabajador){
             $empleado = $trabajador->ficha();
@@ -7153,7 +7154,8 @@ class TrabajadoresController extends \BaseController {
                 $html = "";
                 $view = View::make('pdf.liquidacion', [
                     'liquidacion' => $miLiquidacion,
-                    'configuracion' => $configuracion
+                    'configuracion' => $configuracion,
+                    'isValida' => $isValida
                 ]);
                 $html = $view->render();
 
@@ -7407,7 +7409,7 @@ class TrabajadoresController extends \BaseController {
                         $detalleLiquidacion->sid = Funciones::generarSID();
                         $detalleLiquidacion->liquidacion_id = $liquidacion->id;
                         $detalleLiquidacion->nombre = $prestamo['nombreLiquidacion'];
-                        $detalleLiquidacion->tipo = 'prestamo';
+                        $detalleLiquidacion->tipo = $prestamo['codigo'];
                         $detalleLiquidacion->tipo_id = 4;
                         $detalleLiquidacion->valor = $prestamo['montoCuotaPagar'];
                         $detalleLiquidacion->valor_2 = $prestamo['monto'];
@@ -7419,7 +7421,7 @@ class TrabajadoresController extends \BaseController {
                         }else if($prestamo['leasingCaja']){
                             $detalleLiquidacion->valor_6 = 2;
                         }
-                        $detalleLiquidacion->detalle_id = null;
+                        $detalleLiquidacion->detalle_id = 321;
                         //$detalleLiquidacion->save(); 
 
                         $liquidacion->detalles->add( $detalleLiquidacion );
@@ -7585,7 +7587,7 @@ class TrabajadoresController extends \BaseController {
                 //File::put($destination, PDF::load(utf8_decode($html), 'A4', 'portrait')->output());
                 $pdf = new \Thujohn\Pdf\Pdf();
                 $content = $pdf->load(View::make('pdf.liquidacion', array('liquidacion' => $miLiquidacion,
-                    'configuracion' => $configuracion)))->output();
+                    'configuracion' => $configuracion, 'isValida' => $isValida)))->output();
                 File::put($destination, $content);  
             }else{
                 $empleado->rutFormato = $trabajador->rut_formato();
@@ -7595,6 +7597,8 @@ class TrabajadoresController extends \BaseController {
                 $empleado->motivo = 'Trabajador sin R.I. anterior con 30 días trabajados.';
                 $empleado->isSIS = $totalAfp['isSIS'];
                 $empleado->isSC = $totalSeguroCesantia['isSC'];
+                $empleado->sc = $totalSeguroCesantia;
+                $empleado->sisis = $totalAfp;
                 $sinRentaImponibleAnterior[] = $empleado;
             }
         }

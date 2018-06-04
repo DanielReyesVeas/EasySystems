@@ -342,7 +342,7 @@ class MenuController extends BaseController {
         }else{
             if(Auth::usuario()->user()->id == 1){  
                 if( $menuAdmin ){
-                    $opciones = MenuSistema::where('administrador', '!=', '2')->get();
+                    $opciones = MenuSistema::where('administrador', '!=', '2')->where('administrador', '<>', '4')->get();
                 }else{
                     $opciones = MenuSistema::where('administrador', '<>', '4')->get();
                 }

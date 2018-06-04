@@ -117,6 +117,7 @@ class MesDeTrabajo extends Eloquent {
             $datosMesDeTrabajo->fechaPalabras = Funciones::obtenerFechaTexto();
             $datosMesDeTrabajo->nombre = $mesDeTrabajo->nombre;
             $datosMesDeTrabajo->idAnio = $mesDeTrabajo->anio_id;
+            $datosMesDeTrabajo->indicadores = $mesDeTrabajo->indicadores ? true : false;
             $datosMesDeTrabajo->anio = $mesDeTrabajo->anioRemuneracion->anio;
             $datosMesDeTrabajo->fechaRemuneracion = $mesDeTrabajo->fecha_remuneracion;
             $datosMesDeTrabajo->uf = $uf;

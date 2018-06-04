@@ -197,6 +197,17 @@ return array(
                     'collation' => 'utf8_unicode_ci',
                     'prefix'    => '',
                 ),
+                
+                'esystems_me_77777777' => array(
+                    'driver'    => 'mysql',
+                    'host'      => 'localhost',
+                    'database'  => 'esystems_me_77777777',
+                    'username'  => 'root',
+                    'password'  => '1234',
+                    'charset'   => 'utf8',
+                    'collation' => 'utf8_unicode_ci',
+                    'prefix'    => '',
+                ),
                 /*INICIO_PLANTILLA*/
 	),
 

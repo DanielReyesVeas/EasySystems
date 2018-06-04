@@ -325,8 +325,11 @@ class TiposHaberController extends \BaseController {
     {
         $datos = Input::all();
         $haber = TipoHaber::whereSid($datos['sid'])->first();
-        
-        $haber->cuenta_id = $datos['cuenta']['id'];      
+        $cuenta = NULL;
+        if(isset($datos['cuenta'])){
+            $cuenta = $datos['cuenta']['id'];
+        }
+        $haber->cuenta_id = $cuenta;      
         $haber->save();
         
         $respuesta = array(

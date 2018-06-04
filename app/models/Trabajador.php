@@ -412,7 +412,7 @@ class Trabajador extends Eloquent {
             $monto = $tramo->monto;
             $monto = ( count($cargas) * $monto );
             if((30 - $diasDescontados) < 25){
-                $monto = ($monto - (($monto / 30) * $diasDescontados));
+                $monto = (($monto / 30) * $this->diasTrabajados());
             }
             $isCargas = true;
         }
@@ -769,20 +769,10 @@ class Trabajador extends Eloquent {
                                     $monto = ($monto - (($monto / 30) * $diasDescontados));                       
                                 }
                             }else{
-                                if($haber->tipoHaber->nombre=='Colación'){                                    
-                                    if($empleado->proporcional_colacion==1){
+                                if($haber->tipoHaber->nombre=='Colación' || $haber->tipoHaber->nombre=='Movilización' || $haber->tipoHaber->nombre=='Viático'){                                    
+                                    if($haber->proporcional==1){
                                         $diasDescontados = $this->diasDescontados()['dias'];
                                         $monto = ($monto - (($monto / 30) * $diasDescontados)); 
-                                    }
-                                }else if($haber->tipoHaber->nombre=='Movilización'){
-                                    if($empleado->proporcional_movilizacion==1){
-                                        $diasDescontados = $this->diasDescontados()['dias'];
-                                        $monto = ($monto - (($monto / 30) * $diasDescontados)); 
-                                    }
-                                }else if($haber->tipoHaber->nombre=='Viático'){
-                                    if($empleado->proporcional_viatico==1){
-                                        $diasDescontados = $this->diasDescontados()['dias'];
-                                        $monto = ($monto - (($monto / 30) * $diasDescontados));   
                                     }
                                 }else{
                                     if($haber->tipoHaber->proporcional_dias_trabajados){
@@ -1006,9 +996,23 @@ class Trabajador extends Eloquent {
                         if(!$haber->tipoHaber->imponible){
                             $monto = Funciones::convertir($haber->monto, $haber->moneda);
 
-                            if($haber->tipoHaber->proporcional_dias_trabajados){
-                                $diasDescontados = $this->diasDescontados()['dias'];
-                                $monto = ($monto - (($monto / 30) * $diasDescontados));
+                            if($haber->tipoHaber->id==2){
+                                if($diasTrabajados<25){
+                                    $diasDescontados = $this->diasDescontados()['dias'];
+                                    $monto = ($monto - (($monto / 30) * $diasDescontados));                       
+                                }
+                            }else{
+                                if($haber->tipoHaber->nombre=='Colación' || $haber->tipoHaber->nombre=='Movilización' || $haber->tipoHaber->nombre=='Viático'){                                    
+                                    if($haber->proporcional==1){
+                                        $diasDescontados = $this->diasDescontados()['dias'];
+                                        $monto = ($monto - (($monto / 30) * $diasDescontados)); 
+                                    }
+                                }else{
+                                    if($haber->tipoHaber->proporcional_dias_trabajados){
+                                        $diasDescontados = $this->diasDescontados()['dias'];
+                                        $monto = ($monto - (($monto / 30) * $diasDescontados));                       
+                                    }
+                                }
                             }
 
                             $listaHaberes[] = array(
@@ -1494,9 +1498,11 @@ class Trabajador extends Eloquent {
                     'sid' => $prestamo->sid,
                     'moneda' => $prestamo->moneda,
                     'monto' => $prestamo->monto,
+                    'codigo' => $prestamo->codigo,
                     'glosa' => $prestamo->glosa,
                     'nombreLiquidacion' => $prestamo->nombre_liquidacion,
                     'cuotas' => $prestamo->cuotas,
+                    'codigo' => $prestamo->codigo,
                     'primeraCuota' => $prestamo->primera_cuota,
                     'ultimaCuota' => $prestamo->ultima_cuota,
                     'prestamoCaja' => $prestamo->prestamo_caja ? true : false,
@@ -1546,6 +1552,7 @@ class Trabajador extends Eloquent {
                     'id' => $prestamo->id,
                     'created_at' => date('Y-m-d H:i:s', strtotime($prestamo->created_at)),
                     'glosa' => $prestamo->glosa,
+                    'codigo' => $prestamo->codigo,
                     'nombreLiquidacion' => $prestamo->nombre_liquidacion,
                     'monto' => $prestamo->monto,
                     'cuotas' => $prestamo->cuotas
@@ -2309,7 +2316,8 @@ class Trabajador extends Eloquent {
             $horas = $jornada->numero_horas;
             $horas = ($horas * 4);
             $minutos = ($horas * 60);
-            $valorMinuto = ($this->sueldoBase() / $minutos);
+            $sueldo = (($this->sueldoBase() / 30) * 28);
+            $valorMinuto = ($sueldo / $minutos);
             $descuento = ($valorMinuto * $totalMinutos);            
         }
         
@@ -2858,19 +2866,26 @@ class Trabajador extends Eloquent {
         $totalEmpleador = (( $tasa['tasaEmpleador'] * $rentaImponible ) / 100);
         $cotizacion = (( $tasa['tasaObligatoria'] * $rentaImponible ) / 100);
         $isSIS = false;
+        $sis = 0;
+        
         if($nuevaRentaImponible){
             $isSIS = true;
             $sis = (( $tasa['tasaSis'] * $nuevaRentaImponible ) / 100);
             $rentaImponibleIngresada = $nuevaRentaImponible;
         }else{
-            if($diasLicencia){
-                $mesActual = \Session::get('mesActivo')->mes;
-                $rentaImponibleAnterior = $this->rentaImponibleAnteriorAfp($mesActual);
-                $sis = (( $tasa['tasaSis'] * $rentaImponibleAnterior['rentaImponible'] ) / 100);
-                $isSIS = $rentaImponibleAnterior['isSIS'];
+            $empleado = $this->ficha();
+            if($empleado->prevision_id==8){
+                if($diasLicencia){
+                    $mesActual = \Session::get('mesActivo')->mes;
+                    $rentaImponibleAnterior = $this->rentaImponibleAnteriorAfp($mesActual);
+                    $sis = (( $tasa['tasaSis'] * $rentaImponibleAnterior['rentaImponible'] ) / 100);
+                    $isSIS = $rentaImponibleAnterior['isSIS'];
+                }else{
+                    $isSIS = true;
+                    $sis = (( $tasa['tasaSis'] * $rentaImponible ) / 100);
+                }
             }else{
                 $isSIS = true;
-                $sis = (( $tasa['tasaSis'] * $rentaImponible ) / 100);
             }
         }
         
@@ -3131,13 +3146,16 @@ class Trabajador extends Eloquent {
                         $adicional = 0;
                         $totalSalud = $montoSalud;
                     }
-                }else{
-                    $totalSalud = $montoSalud;  
+                }else{                      
                     if($empresa->caja_id!=257){
                         $montoFonasa = round( $rentaImponible * 0.064 );
                         $montoCaja = round( $rentaImponible * 0.006 );
+                        $montoSalud = ($montoFonasa + $montoCaja);
+                        $totalSalud = $montoSalud;
                     }else{
-                        $montoFonasa = round( $rentaImponible * 0.07 );                    
+                        $montoFonasa = round(($rentaImponible * 0.064) + ($rentaImponible * 0.006));   
+                        $montoSalud = $montoFonasa;
+                        $totalSalud = $montoSalud;
                     }  
                 }                        
             }else{
@@ -3286,6 +3304,7 @@ class Trabajador extends Eloquent {
         if($datos['create']){
             foreach($datos['create'] as $haber){
                 $nuevoHaber = new Haber();
+                $nuevoHaber->sid = Funciones::generarSID();
                 $nuevoHaber->tipo_haber_id = $haber['tipo']['id'];
                 $nuevoHaber->trabajador_id = $this->id;
                 $nuevoHaber->moneda = $haber['moneda'];
@@ -3320,6 +3339,7 @@ class Trabajador extends Eloquent {
         if($datos['create']){
             foreach($datos['create'] as $descuento){
                 $nuevoDescuento = new Descuento();
+                $nuevoDescuento->sid = Funciones::generarSID();
                 $nuevoDescuento->tipo_descuento_id = $descuento['tipo']['id'];
                 $nuevoDescuento->trabajador_id = $this->id;
                 $nuevoDescuento->moneda = $descuento['moneda'];
@@ -3422,6 +3442,7 @@ class Trabajador extends Eloquent {
             $rentaImponible = $this->sumaImponibles();
             $todosImponibles = $this->todosImponibles();
             $diasTrabajados = $this->diasTrabajados();
+            $topeSeguro = RentaTopeImponible::valor('Para Seguro de Cesantía', $mes);
             $topeSeguro = RentaTopeImponible::where('mes', $mes)->where('nombre', 'Para Seguro de Cesantía')->first()->valor;
             $topeSeguroPesos = Funciones::convertirUF($topeSeguro);        
             
@@ -3435,7 +3456,7 @@ class Trabajador extends Eloquent {
                         $rentaImponibleAnterior = $this->rentaImponibleAnteriorSC($mesActual);
                         $rentaImponibleEmpleador = $rentaImponibleAnterior['rentaImponible'];
                         $isSC = $rentaImponibleAnterior['isSC'];
-                        
+                        $rentaImponibleEmpleador = $rentaImponible;
                         if($todosImponibles > $topeSeguroPesos && $diasTrabajados < 30){
                             $diasDescontados = $this->diasDescontados()['dias'];
                             $rentaImponible = ($topeSeguroPesos - (($topeSeguroPesos / 30) * $diasDescontados));
@@ -3455,7 +3476,7 @@ class Trabajador extends Eloquent {
                     if($rentaImponible > $topeSeguroPesos){
                         $rentaImponible = $topeSeguroPesos;
                     }   
-                    $rentaImponibleEmpleador = $topeSeguroPesos;
+                    $rentaImponibleEmpleador = $rentaImponible;
                     $isSC = true;
                 }
             }
@@ -3958,32 +3979,34 @@ class Trabajador extends Eloquent {
         if(!\Session::get('empresa')){
             return Response::json(array());
         }
-        $permisos = MenuSistema::obtenerPermisosAccesosURL(Auth::usuario()->user(), '#reajuste-global');
         $mesActual = \Session::get('mesActivo');
-        $finMes = $mesActual->fechaRemuneracion;
-        $mes = $mesActual->mes;
-        
-        $rmi = RentaMinimaImponible::where('mes', $mes)->where('nombre', 'Trab. Dependientes e Independientes')->first()->valor;
-        $trabajadores = Trabajador::all();
-        $listaTrabajadores=array();
-        
-        if( $trabajadores->count() ){
-            foreach( $trabajadores as $trabajador ){
-                $empleado = $trabajador->ficha();
-                if($empleado){
-                    if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes && Funciones::convertir($empleado->sueldo_base, $empleado->moneda_sueldo)<$rmi){
-                       $notificaciones[] = array(
-                            'concepto' => 'RMI',
-                            'titulo' => "<a href='#reajuste-global'>Reajuste Global Sueldo</a>",
-                            'mensaje' => "<a href='#reajuste-global'>Existen trabajadores cuyo sueldo no supera la Renta Mínima  Imponible.</a>"
-                        ); 
-                        return;
+        if($mesActual->indicadores){
+            $permisos = MenuSistema::obtenerPermisosAccesosURL(Auth::usuario()->user(), '#reajuste-global');
+            $finMes = $mesActual->fechaRemuneracion;
+            $mes = $mesActual->mes;
+
+            $rmi = RentaMinimaImponible::where('mes', $mes)->where('nombre', 'Trab. Dependientes e Independientes')->first()->valor;
+            $trabajadores = Trabajador::all();
+            $listaTrabajadores=array();
+
+            if( $trabajadores->count() ){
+                foreach( $trabajadores as $trabajador ){
+                    $empleado = $trabajador->ficha();
+                    if($empleado){
+                        if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes && Funciones::convertir($empleado->sueldo_base, $empleado->moneda_sueldo)<$rmi){
+                           $notificaciones[] = array(
+                                'concepto' => 'RMI',
+                                'titulo' => "<a href='#reajuste-global'>Reajuste Global Sueldo</a>",
+                                'mensaje' => "<a href='#reajuste-global'>Existen trabajadores cuyo sueldo no supera la Renta Mínima  Imponible.</a>"
+                            ); 
+                            return;
+                        }
+
                     }
-                    
+
                 }
-                
+
             }
-            
         }
         
         return;

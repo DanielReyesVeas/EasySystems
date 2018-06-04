@@ -113,7 +113,7 @@ class AportesController extends \BaseController {
                         'a' => $descuento,
                         'nombre' => $descuento->nombreIsapre()
                     );
-                }else if($descuento->estructura_descuento_id<3){
+                }else if($descuento->estructura_descuento_id<3 || $descuento->estructura_descuento_id==10){
                     $listaDescuentos[]=array(
                         'id' => $descuento->id,
                         'sid' => $descuento->sid,
@@ -381,8 +381,11 @@ class AportesController extends \BaseController {
     {
         $datos = Input::all();
         $aporte = Aporte::whereSid($datos['sid'])->first();
-        
-        $aporte->cuenta_id = $datos['cuenta']['id'];      
+        $cuenta = NULL;
+        if(isset($datos['cuenta'])){
+            $cuenta = $datos['cuenta']['id'];
+        }
+        $aporte->cuenta_id = $cuenta;      
         $aporte->save();
         
         $respuesta = array(

@@ -1134,7 +1134,7 @@ CREATE TABLE IF NOT EXISTS `estructuras_descuento` (
   `updated_at` datetime NOT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=10 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=11 ;
 
 --
 -- Volcado de datos para la tabla `estructuras_descuento`
@@ -1146,10 +1146,11 @@ INSERT INTO `estructuras_descuento` (`id`, `nombre`, `created_at`, `updated_at`,
 (3, 'APVC', '2017-09-27 00:00:00', '2017-09-27 00:00:00', NULL),
 (4, 'APV A', '2017-09-27 00:00:00', '2017-09-27 00:00:00', NULL),
 (5, 'APV B', '2017-09-27 00:00:00', '2017-09-27 00:00:00', NULL),
-(9, 'Salud', '0000-00-00 00:00:00', '0000-00-00 00:00:00', NULL),
-(8, 'Legal', '0000-00-00 00:00:00', '0000-00-00 00:00:00', NULL),
+(7, 'Cuenta Ahorro AFP', '0000-00-00 00:00:00', '0000-00-00 00:00:00', NULL),
 (6, 'CCAF', '0000-00-00 00:00:00', '0000-00-00 00:00:00', NULL),
-(7, 'Cuenta Ahorro AFP', '0000-00-00 00:00:00', '0000-00-00 00:00:00', NULL);
+(8, 'Legal', '0000-00-00 00:00:00', '0000-00-00 00:00:00', NULL),
+(9, 'Salud', '0000-00-00 00:00:00', '0000-00-00 00:00:00', NULL),
+(10, 'Préstamos', '0000-00-00 00:00:00', '0000-00-00 00:00:00', NULL);
 
 -- --------------------------------------------------------
 
@@ -1645,6 +1646,7 @@ CREATE TABLE IF NOT EXISTS `meses_de_trabajo` (
   `nombre` varchar(255) NOT NULL,
   `fecha_remuneracion` date NOT NULL,
   `anio_id` int(11) NOT NULL,
+  `indicadores` TINYINT NOT NULL DEFAULT  '1',
   `created_at` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `updated_at` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `deleted_at` datetime DEFAULT NULL,
@@ -1802,6 +1804,7 @@ INSERT INTO `plantillas_finiquitos` (`id`, `sid`, `nombre`, `cuerpo`, `created_a
 CREATE TABLE IF NOT EXISTS `prestamos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `sid` varchar(50) NOT NULL,
+  `codigo` varchar(255) NOT NULL DEFAULT  '0',
   `trabajador_id` int(11) NOT NULL,
   `fecha` date DEFAULT NULL,
   `glosa` varchar(255) NOT NULL,
@@ -1963,7 +1966,7 @@ CREATE TABLE IF NOT EXISTS `tipos_descuento` (
   `updated_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   `created_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=102 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=322 ;
 
 INSERT INTO `tipos_descuento` (`id`, `estructura_descuento_id`, `cuenta_id`, `sid`, `codigo`, `nombre`, `caja`, `descripcion`, `afp_id`, `forma_pago`, `updated_at`, `created_at`) VALUES
 (1, 8, NULL, 'K20170309190412CWL7447', '10104', 'Impuesto Determinado', 1, 'Impuesto Determinado', NULL, NULL, '2017-08-21 18:05:45', '2017-03-09 22:04:13'),
@@ -2013,7 +2016,8 @@ INSERT INTO `tipos_descuento` (`id`, `estructura_descuento_id`, `cuenta_id`, `si
 (99, 9, NULL, 'E20171117094501DOG3131', 612, '252', 0, 'Isapre Río Blanco', NULL, NULL, '2017-11-17 12:45:02', '2017-11-17 12:45:02'),
 (100, 9, NULL, 'S20171117094524WNQ4075', 613, '253', 0, 'San Lorenzo Isapre Ltda', NULL, NULL, '2017-11-17 12:45:25', '2017-11-17 12:45:25'),
 (101, 9, NULL, 'I20171117094547LZW5793', 614, '254', 0, 'Isapre Cruz del Norte', NULL, NULL, '2017-11-17 12:45:48', '2017-11-17 12:45:48'),
-(11, 6, NULL, 'M20171117104149NKX8693', 501, 'Caja de Compensación', 0, 'Caja de Compensación', NULL, NULL, '2017-11-17 13:41:50', '2017-11-17 13:41:50');
+(11, 6, NULL, 'M20171117104149NKX8693', 501, 'Caja de Compensación', 0, 'Caja de Compensación', NULL, NULL, '2017-11-17 13:41:50', '2017-11-17 13:41:50'),
+(321, 10, NULL, 'Q20180530153348LTW3578', 50010, 'Préstamos', 0, 'Préstamos', NULL, 102, '2018-05-30 19:33:48', '2018-05-30 19:33:48');
 
 
 

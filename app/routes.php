@@ -6,7 +6,7 @@ use GuzzleHttp\Client;
 //ini_set('display_errors', 'On');
 
 ini_set('max_execution_time', 30000);
-define('VERSION_SISTEMA', '1.6.6');
+define('VERSION_SISTEMA', '1.6.9');
 ini_set('memory_limit', '3048M');
 
 if(Config::get('cliente.LOCAL')){
@@ -127,6 +127,176 @@ Route::get('liq', function(){
         echo "Sin Empresas";
     }
 });
+
+Route::get('prest', function(){
+
+    Config::set('database.default', 'principal' );
+    $empresas = Empresa::all();
+    
+    if($empresas->count()){
+        foreach($empresas as $empresa){
+            $prestamos = array();
+            Config::set('database.default', $empresa->base_datos);
+            $prestamos = Prestamo::all();
+            echo '<h1>' . $empresa->razon_social . '</h1>';
+            echo '<h3>' . $empresa->rut . '</h3>';
+            $count = 0;
+            foreach($prestamos as $prestamo){
+                if($prestamo->codigo==0){
+                    $prestamo->codigo = $prestamo->id;
+                    $prestamo->save();
+                }
+            }
+            echo '<br />Total: ' . $count . '<br />';
+        }
+        
+    }else{
+        echo "Sin Empresas";
+    }
+});
+
+Route::get('cuadrar', function(){
+
+    Config::set('database.default', 'principal' );
+    $empresas = Empresa::all();
+    
+    if($empresas->count()){
+        foreach($empresas as $empresa){
+            $liquidaciones = array();
+            Config::set('database.default', $empresa->base_datos);
+            $liquidaciones = Liquidacion::all();
+            echo '<br /><h1>' . $empresa->razon_social . '</h1><br />';
+            echo '<h3>' . $empresa->rut . '</h3><br />';
+            $count = 0;
+            foreach($liquidaciones as $liquidacion){
+                $montoCaja = 0;
+                $montoSalud = 0;
+                $montoFonasa = 0;
+                $fonasa = $liquidacion->detalleIpsIslFonasa;
+                if($fonasa){
+                    $montoFonasa = $fonasa->cotizacion_fonasa;
+                    if($montoFonasa){
+                        $salud = $liquidacion->detalleSalud;
+                        $caja = $liquidacion->detalleCaja;
+                        
+                        if($salud){
+                            $montoSalud = $salud->cotizacion_obligatoria;
+                        }
+                        if($caja){
+                            $montoCaja = $caja->cotizacion;
+                            $suma = ($montoFonasa + $montoCaja);
+                            if($suma != $montoSalud){
+                                $count++;
+                                echo '<br />' . $liquidacion->trabajador_nombres . ' ' . $liquidacion->trabajador_apellidos . ':<br />';
+                                echo 'Salud: ' . Funciones::formatoPesos($montoSalud) . '<br />';
+                                echo 'Fonasa: ' . Funciones::formatoPesos($montoFonasa) . '<br />';
+                                echo 'Caja: ' . Funciones::formatoPesos($montoCaja) . '<br />';
+                                echo 'SUMA: ' . Funciones::formatoPesos($suma) . '<br />';
+                                if($suma<$montoSalud){
+                                    echo 'Menor<br />';
+                                    $montoCaja += 1;
+                                }else{
+                                    echo 'Mayor<br />'; 
+                                    $montoCaja -= 1;
+                                }
+                                /*$caja->cotizacion = $montoCaja;
+                                $caja->save();*/
+                                $suma = ($montoFonasa + $montoCaja);
+                                echo 'Salud: ' . Funciones::formatoPesos($montoSalud) . '<br />';
+                                echo 'Fonasa: ' . Funciones::formatoPesos($montoFonasa) . '<br />';
+                                echo 'Caja: ' . Funciones::formatoPesos($montoCaja) . '<br />';
+                                echo 'SUMA: ' . Funciones::formatoPesos($suma) . '<br />';
+                                if($suma != $montoSalud){
+                                    echo '<h1>No</h1><br />';
+                                }else{
+                                    echo '<h1>OK</h1><br />';
+                                }
+                            }
+                        }else{
+                            /*echo 'ISL<br />';
+                            $montoCaja = $fonasa->cotizacion_isl;
+                            $suma = ($montoSalud + $montoCaja);
+                            if($suma != $montoFonasa){
+                                $count++;
+                                echo '<br />' . $liquidacion->trabajador_nombres . ' ' . $liquidacion->trabajador_apellidos . ':<br />';
+                                echo 'Salud: ' . Funciones::formatoPesos($montoSalud) . '<br />';
+                                echo 'Fonasa: ' . Funciones::formatoPesos($montoFonasa) . '<br />';
+                                echo 'Caja: ' . Funciones::formatoPesos($montoCaja) . '<br />';
+                                echo 'SUMA: ' . Funciones::formatoPesos($suma) . '<br />';
+                                if($suma<$montoFonasa){
+                                    echo 'Menor<br />';
+                                    $montoCaja += 1;
+                                }else{
+                                    echo 'Mayor<br />'; 
+                                    $montoCaja -= 1;
+                                }
+                                $suma = ($montoSalud + $montoCaja);
+                                echo 'Salud: ' . Funciones::formatoPesos($montoSalud) . '<br />';
+                                echo 'Fonasa: ' . Funciones::formatoPesos($montoFonasa) . '<br />';
+                                echo 'Caja: ' . Funciones::formatoPesos($montoCaja) . '<br />';
+                                echo 'SUMA: ' . Funciones::formatoPesos($suma) . '<br />';
+                                if($suma != $montoFonasa){
+                                    echo '<h1>Nope</h1><br />';
+                                }
+                            }*/
+                        }        
+                    }
+                }
+            }
+            echo '<br />Total: ' . $count . '<br />';
+        }
+    }else{
+        echo "Sin Empresas";
+    }
+});
+
+Route::get('desc', function(){
+
+    Config::set('database.default', 'principal' );
+    $empresas = Empresa::all();
+    
+    if($empresas->count()){
+        foreach($empresas as $empresa){                        
+            Config::set('database.default', $empresa->base_datos);
+            $es = EstructuraDescuento::find(10);
+            if($es){
+                echo '<h1>' . $empresa->razon_social . '</h1><br />';
+                echo 'NOPE<br />';
+            }else{
+                $e = new EstructuraDescuento();
+                $e->id = 10;
+                $e->nombre = 'Préstamos';
+                $e->save();
+            }
+            
+            DB::table('detalle_liquidacion')->where('tipo_id', 4)->update(array('detalle_id' => 321));            
+            
+            $desc = TipoDescuento::find(321);
+            if($desc){
+                echo '<h1>' . $empresa->razon_social . '</h1><br />';
+                echo 'NOPE<br />';
+            }else{
+                $d = new TipoDescuento();
+                $d->id = 321;
+                $d->estructura_descuento_id = 10;
+                $d->cuenta_id = NULL;
+                $d->sid = 'Q20180530153348LTW3578';
+                $d->codigo = 50010;
+                $d->nombre = 'Préstamos';
+                $d->caja = 0;
+                $d->descripcion = 'Préstamos';
+                $d->afp_id = NULL;
+                $d->forma_pago = NULL;
+                $d->save();    
+                echo 'OK<br />';
+            }
+        }
+        
+    }else{
+        echo "Sin Empresas";
+    }
+});
+
 
 Route::group(array('prefix' => 'rest/cme', 'before'=>'auth_ajax'), function() {
     
@@ -1250,6 +1420,7 @@ Route::group(array('before'=>'auth_ajax'), function() {
             \Session::put('mesActivo', $mesActual);
             
             $fecha = \Session::get('mesActivo')->fechaRemuneracion;
+
             $indicadores = ValorIndicador::valorFecha($fecha);
             
             $empresaActual = array(
@@ -1461,7 +1632,7 @@ c139f46406b37dedd4062fea30a5ccec
             $mesActual = MesDeTrabajo::selectMes($mesActivo['id']);
             \Session::put('mesActivo', $mesActual);
             $fecha = \Session::get('mesActivo')->fechaRemuneracion;
-            $indicadores = ValorIndicador::valorFecha($fecha);
+            $indicadores = ValorIndicador::valorFecha($fecha);                
 
             if($indicadores){
                 $uf = $indicadores->uf;
@@ -1478,7 +1649,9 @@ c139f46406b37dedd4062fea30a5ccec
             $respuesta = array(
                 'success' => true,
                 'recargar' => true,
-                'mesActual' => $mesActivo,
+                'mesActual' => $mesActual,
+                'ultimoMes' => $empresa->ultimoMes(),
+                'primerMes' => $empresa->primerMes(),
                 'uf' => $uf,
                 'utm' => $utm,
                 'uta' => $uta,

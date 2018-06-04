@@ -60,6 +60,26 @@ class Liquidacion extends Eloquent {
         return $this->belongsTo('CentroCosto', 'centro_costo_id');
     }  
     
+    public function nombreCompleto()
+    {
+        $nombres = $this->trabajador_nombres;
+        $apellidos = $this->trabajador_apellidos;
+        $empresa = \Session::get('empresa');
+        $apellidoNombre = Empresa::variableConfiguracion('apellido_nombre');
+        
+        if($apellidoNombre){
+            if($apellidos && $nombres){
+                $nombreCompleto = $apellidos . ", " . $nombres;            
+            }else{
+                $nombreCompleto = $apellidos . " " . $nombres;                            
+            }
+        }else{
+            $nombreCompleto = $nombres . " " . $apellidos;            
+        }
+        
+        return $nombreCompleto;
+    }
+    
     public function generarCuerpo()
     {
         $mes = \Session::get('mesActivo');
@@ -1004,8 +1024,12 @@ class Liquidacion extends Eloquent {
         
         if($detallesApvi->count()){
             foreach($detallesApvi as $detalleApvi){
+                $nombre = 'APV $ (Régimen ' . strtoupper($detalleApvi->regimen) . ' Individual) AFP ' . $detalleApvi->afp->glosa;
+                if(strlen($nombre)>50){
+                    $nombre = substr($nombre, 0, 50);
+                }
                 $listaDescuentos[] = array(
-                    'nombre' => 'APV $ (Régimen ' . strtoupper($detalleApvi->regimen) . ' Individual) AFP ' . $detalleApvi->afp->glosa,
+                    'nombre' => $nombre,
                     'monto' => $detalleApvi->monto,
                     'idCuenta' => $detalleApvi->cuenta($cuentasCodigo, $centroCostoId)
                 );
@@ -1057,6 +1081,17 @@ class Liquidacion extends Eloquent {
 
                     $listaDescuentos[] = array(
                         'nombre' => $detalle->nombre,
+                        'monto' => $detalle->valor,
+                        'idCuenta' => $codigo
+                    );                  
+                }else if($detalle->tipo_id==4){
+                    $descuento = TipoDescuento::find($detalle->detalle_id);
+                    $codigo = $descuento->cuenta($cuentasCodigo, $centroCostoId);
+
+                    $listaDescuentos[] = array(
+                        'nombre' => 'Préstamo',
+                        'codigo' => $detalle->tipo,
+                        'glosa' => $detalle->nombre,
                         'monto' => $detalle->valor,
                         'idCuenta' => $codigo
                     );                  

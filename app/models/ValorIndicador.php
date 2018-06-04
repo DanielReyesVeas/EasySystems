@@ -148,6 +148,12 @@ class ValorIndicador extends Eloquent {
     
     static function valorFecha($fecha)
     {
+        $mes = Session::get('mesActivo');
+        if(!$mes->indicadores){
+            $m = date('m', strtotime('-' . 1 . ' month', strtotime($mes->mes)));
+            $y = date('Y', strtotime('-' . 1 . ' month', strtotime($mes->mes)));
+            $fecha = Funciones::obtenerFechaRemuneracionMes($m, $y);
+        }
         $valoresIndicadores = ValorIndicador::where('fecha', $fecha)->get();
         $datosValoresIndicadores = new stdClass();
         
@@ -165,9 +171,7 @@ class ValorIndicador extends Eloquent {
             return $datosValoresIndicadores;
         }else{
             return null;
-        }
-                
-        
+        }                        
     }
     
     static function ufAnterior()

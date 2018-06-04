@@ -47,7 +47,7 @@ class Empresa extends \Eloquent {
         }
 
         return $detalles;
-    }
+    }    
   
     public function url()
     {   

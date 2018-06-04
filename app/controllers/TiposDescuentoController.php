@@ -24,7 +24,7 @@ class TiposDescuentoController extends \BaseController {
         
         if( $tiposDescuento->count() ){
             foreach( $tiposDescuento as $tipoDescuento ){
-                if($tipoDescuento->estructura_descuento_id==1 || $tipoDescuento->estructura_descuento_id==2){
+                if($tipoDescuento->estructura_descuento_id<3 || $tipoDescuento->estructura_descuento_id==10){
                     $listaDescuentos[]=array(
                         'id' => $tipoDescuento->id,
                         'sid' => $tipoDescuento->sid,
@@ -125,7 +125,7 @@ class TiposDescuentoController extends \BaseController {
         if( $tiposDescuento->count() ){
             foreach( $tiposDescuento as $tipoDescuento ){
                 if($tipoDescuento->id!=3){
-                    if($tipoDescuento->estructura_descuento_id<3){                   
+                    if($tipoDescuento->estructura_descuento_id<3 || $tipoDescuento->estructura_descuento_id==10){                   
                         $listaTiposDescuento[]=array(
                             'id' => $tipoDescuento->id,
                             'sid' => $tipoDescuento->sid,
@@ -431,8 +431,11 @@ class TiposDescuentoController extends \BaseController {
     {
         $datos = Input::all();
         $tipoDescuento = TipoDescuento::whereSid($datos['sid'])->first();
-        
-        $tipoDescuento->cuenta_id = $datos['cuenta']['id'];      
+        $cuenta = NULL;
+        if(isset($datos['cuenta'])){
+            $cuenta = $datos['cuenta']['id'];
+        }
+        $tipoDescuento->cuenta_id = $cuenta;      
         $tipoDescuento->save();
         
         $respuesta = array(

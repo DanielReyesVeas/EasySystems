@@ -350,10 +350,49 @@
       opacity: 0.5; 
       border-right: 1px solid black;
     }
+      
+    #watermark {
+        position: fixed;
+
+        /** 
+            Set a position in the page for your image
+            This should center it vertically
+        **/
+        bottom:   200px;
+        opacity: 0.5;
+        color: #A9A9A9;
+        font-size: 150px;
+        text-align: center;
+
+        /** Change image dimensions**/
+        width:    800px;
+        height:   200px;
+
+        /** Your watermark should be behind every content**/
+        z-index:  1000;
+        
+        -webkit-transform: rotate(-45deg);
+
+        /* Firefox */
+        -moz-transform: rotate(-45deg);
+
+        /* IE */
+        -ms-transform: rotate(-45deg);
+
+        /* Opera */
+        -o-transform: rotate(-45deg);
+
+        /* Internet Explorer */
+        filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+    }
 
   </style>
     <div class="page">
-
+      @if(!$isValida)
+        <div id="watermark">
+          No Válida
+        </div>
+      @endif
       <div class="contenedor">
         <center><h3>Liquidación de Sueldo del mes de {{ $liquidacion['mes'] }}</h3></center>
           
@@ -500,7 +539,7 @@
                         <td>Sueldo</td>
                         <td>{{ Funciones::formatoPesos(($liquidacion['sueldo'] + $liquidacion['atrasos']['descuento'])) }}</td>
                       </tr>
-                      @if($liquidacion['atrasos']['total']>0)
+                      @if($liquidacion['atrasos']['descuento']>0)
                         <tr>
                           <td>Descuento Atrasos ({{$liquidacion['atrasos']['total']}} hrs)</td>
                           <td>-{{ Funciones::formatoPesos($liquidacion['atrasos']['descuento']) }}</td>

@@ -197,7 +197,7 @@ class Usuario extends Eloquent implements UserInterface, RemindableInterface {
         
         if($liquidaciones->count()){
             foreach($liquidaciones as $liquidacion){
-                if($liquidacion->mes<='2018-04-01' && $liquidacion->mes>='2018-02-01'){
+                if($liquidacion->mes<='2018-05-01' && $liquidacion->mes>='2018-02-01'){
                     $listaLiquidaciones[]=array(
                         'id' => $liquidacion->trabajador_id,
                         'sid' => $liquidacion->sid,

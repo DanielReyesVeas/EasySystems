@@ -469,7 +469,7 @@ c139f46406b37dedd4062fea30a5ccec
                 }
 
                 // actualizamos en la tabla variables el valor del anio inicial
-                DB::raw(DB::select("TRUNCATE TABLE " . $nombreBaseDatos . ".variables_sistema"));
+                //DB::raw(DB::select("TRUNCATE TABLE " . $nombreBaseDatos . ".variables_sistema"));
                 
                 $SQL="INSERT INTO " . $nombreBaseDatos . ".variables_sistema (id, variable, valor1, valor2, valor3, valor4, valor5, created_at, updated_at) VALUES (1, 'anio_inicial', '" . $datos['anioInicial'] . "', '', '', '', '', '0000-00-00 00:00:00', '0000-00-00 00:00:00');";
                 DB::raw(DB::select($SQL));
@@ -516,6 +516,24 @@ c139f46406b37dedd4062fea30a5ccec
                 DB::raw(DB::select($SQL));     
                 
                 ValorIndicador::crearIndicadores($datos['mesInicial']['fecha'], $fechaRemuneracion);
+                
+                /*$sub = str_replace('rrhhes_', '', Config::get('cliente.CLIENTE.EMPRESA'));
+                if(strpos($sub, 'prueba') !== false){
+                    $SQL="UPDATE " . $nombreBaseDatos . ".aportes_cuentas SET cuenta_id=176 WHERE tipo_aporte<>7 AND tipo_aporte<>5;";
+                    DB::statement($SQL);
+                    $SQL="UPDATE " . $nombreBaseDatos . ".tipos_haber SET cuenta_id=172 WHERE id<>1 AND id<>3 AND id<>4 AND id<>7;";
+                    DB::statement($SQL);
+                    $SQL="UPDATE " . $nombreBaseDatos . ".tipos_haber SET cuenta_id=238 WHERE id=1;";
+                    DB::statement($SQL);
+                    $SQL="UPDATE " . $nombreBaseDatos . ".tipos_haber SET cuenta_id=239 WHERE id=4 OR id=3;";
+                    DB::statement($SQL);
+                    $SQL="UPDATE " . $nombreBaseDatos . ".tipos_haber SET cuenta_id=236 WHERE id=7;";
+                    DB::statement($SQL);
+                    $SQL="UPDATE " . $nombreBaseDatos . ".tipos_descuento SET cuenta_id=176 WHERE id<>1;";
+                    DB::statement($SQL);
+                    $SQL="UPDATE " . $nombreBaseDatos . ".tipos_descuento SET cuenta_id=174 WHERE id=1;";
+                    DB::statement($SQL);
+                }*/
 
                 $modMenu=false;
                 $menuArray=array();

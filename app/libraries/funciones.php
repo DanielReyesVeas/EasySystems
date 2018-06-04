@@ -1579,6 +1579,13 @@ class Funciones{
         return $anio . "-" . $mes . "-" . $dia;
     }
     
+    static function obtenerFechaRemuneracionMes($mes, $anio)
+    {
+        $dia = Funciones::getUltimoDiaMes($anio, $mes);
+        
+        return $anio . "-" . $mes . "-" . $dia;
+    }
+    
     static function obtenerFechaMes($mes, $anio)
     {
         $mes = Funciones::obtenerMes($mes);

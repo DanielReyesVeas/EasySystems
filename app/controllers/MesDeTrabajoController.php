@@ -124,10 +124,13 @@ class MesDeTrabajoController extends \BaseController {
         $mesDeTrabajo->nombre = $datos['nombre'];
         $mesDeTrabajo->fecha_remuneracion = $datos['fecha_remuneracion'];
         $mesDeTrabajo->anio_id = $idAnio;
+        $mesDeTrabajo->indicadores = $datos['indicadores'];
         $mesDeTrabajo->save();
-        Trabajador::crearSemanasCorridas($mesDeTrabajo);
-        Trabajador::calcularVacaciones($mesDeTrabajo);
-        ValorIndicador::crearIndicadores($mesDeTrabajo->mes, $datos['fecha_remuneracion']);
+        if($datos['indicadores']){
+            Trabajador::crearSemanasCorridas($mesDeTrabajo);
+            Trabajador::calcularVacaciones($mesDeTrabajo);
+            ValorIndicador::crearIndicadores($mesDeTrabajo->mes, $datos['fecha_remuneracion']);
+        }
         Config::set('database.default', $empresa->base_datos );
         $respuesta=array(
             'success' => true,
@@ -225,6 +228,8 @@ class MesDeTrabajoController extends \BaseController {
             $comprobanteRRhh->empresa = $comprobante['Empresa'];
             $comprobanteRRhh->comentario = $comprobante['Comentario'];
             $comprobanteRRhh->numero = 0;
+            $comprobanteRRhh->success = NULL;
+            $comprobanteRRhh->mensaje = '';
             $comprobanteRRhh->save();
                 
             foreach($comprobante['Detalle'] as $comprobanteDetalle){
@@ -251,11 +256,11 @@ class MesDeTrabajoController extends \BaseController {
                 $texto = "RESULTADO: ".$resultado->GenerarAsientoRemuneracionesResult->Exito."\r\n";
                 $texto.=" KEY: ".$resultado->GenerarAsientoRemuneracionesResult->Key."\r\n";
                 $texto.=" MENSAJE: ".$resultado->GenerarAsientoRemuneracionesResult->Mensaje."\r\n";
-                
-                
-                
+                                                
                 if( $resultado->GenerarAsientoRemuneracionesResult->Exito ){
                     $comprobanteRRhh->numero = $resultado->GenerarAsientoRemuneracionesResult->Key;
+                    $comprobanteRRhh->success = $resultado->GenerarAsientoRemuneracionesResult->Exito;
+                    $comprobanteRRhh->mensaje = $resultado->GenerarAsientoRemuneracionesResult->Mensaje;
                     $comprobanteRRhh->save();
                     $respuesta=array(
                         'success' => true,
@@ -264,6 +269,9 @@ class MesDeTrabajoController extends \BaseController {
                         'obj' => $parameters
                     );
                 }else{
+                    $comprobanteRRhh->success = $resultado->GenerarAsientoRemuneracionesResult->Exito;
+                    $comprobanteRRhh->mensaje = $resultado->GenerarAsientoRemuneracionesResult->Mensaje;
+                    $comprobanteRRhh->save();
                     $respuesta=array(
                         'success' => false,
                         'mensaje' => $texto,
