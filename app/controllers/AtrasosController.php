@@ -96,18 +96,32 @@ class AtrasosController extends \BaseController {
      */
     public function show($sid)
     {
-        $atraso = Atraso::whereSid($sid)->first();
-
-        $datos=array(
-            'id' => $atraso->id,
-            'sid' => $atraso->sid,            
-            'fecha' => $atraso->fecha,
-            'horas' => $atraso->horas,
-            'minutos' => $atraso->minutos,
-            'total' => date('H:i', mktime($atraso->horas,$atraso->minutos)),
-            'observacion' => $atraso->observacion,
-            'trabajador' => $atraso->trabajadorAtraso()
+        $permisos = MenuSistema::obtenerPermisosAccesosURL(Auth::usuario()->user(), '#atrasos');
+        $datosAtraso = null;
+        $trabajadores = array();
+        
+        if($sid){
+            $atraso = Atraso::whereSid($sid)->first();
+            $datosAtraso=array(
+                'id' => $atraso->id,
+                'sid' => $atraso->sid,            
+                'fecha' => $atraso->fecha,
+                'horas' => $atraso->horas,
+                'minutos' => $atraso->minutos,
+                'total' => date('H:i', mktime($atraso->horas,$atraso->minutos)),
+                'observacion' => $atraso->observacion,
+                'trabajador' => $atraso->trabajadorAtraso()
+            );
+        }else{
+            $trabajadores = Trabajador::activosFiniquitados();
+        }
+        
+        $datos = array(
+            'accesos' => $permisos,
+            'datos' => $datosAtraso,
+            'trabajadores' => $trabajadores
         );
+        
         return Response::json($datos);
     }
 

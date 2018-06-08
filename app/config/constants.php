@@ -178,18 +178,18 @@ return array(
         array( 'id' => 4, 'value' => 'Credito a 90 dias' )
     ),
     'meses' =>  array(
-        array('id'=>1, 'value'=>'Enero'),
-        array('id'=>2, 'value'=>'Febrero'),
-        array('id'=>3, 'value'=>'Marzo'),
-        array('id'=>4, 'value'=>'Abril'),
-        array('id'=>5, 'value'=>'Mayo'),
-        array('id'=>6, 'value'=>'Junio'),
-        array('id'=>7, 'value'=>'Julio'),
-        array('id'=>8, 'value'=>'Agosto'),
-        array('id'=>9, 'value'=>'Septiembre'),
-        array('id'=>10, 'value'=>'Octubre'),
-        array('id'=>11, 'value'=>'Noviembre'),
-        array('id'=>12, 'value'=>'Diciembre')
+        array('id'=>1, 'mes' => '01', 'value'=>'Enero'),
+        array('id'=>2, 'mes' => '02', 'value'=>'Febrero'),
+        array('id'=>3, 'mes' => '03', 'value'=>'Marzo'),
+        array('id'=>4, 'mes' => '04', 'value'=>'Abril'),
+        array('id'=>5, 'mes' => '05', 'value'=>'Mayo'),
+        array('id'=>6, 'mes' => '06', 'value'=>'Junio'),
+        array('id'=>7, 'mes' => '07', 'value'=>'Julio'),
+        array('id'=>8, 'mes' => '08', 'value'=>'Agosto'),
+        array('id'=>9, 'mes' => '09', 'value'=>'Septiembre'),
+        array('id'=>10, 'mes' => '10', 'value'=>'Octubre'),
+        array('id'=>11, 'mes' => '11', 'value'=>'Noviembre'),
+        array('id'=>12, 'mes' => '12', 'value'=>'Diciembre')
     ),
     'tipo_menu'=> array(
         array( 'id' => 1, 'value' => 'Titulo'),

@@ -25,6 +25,22 @@ class RentaTopeImponible extends Eloquent {
     	return $listaRentasTopeImponibles;
     }
     
+    static function valor($nombre)
+    {
+        $mes = Session::get('mesActivo');
+        $fecha = $mes->mes;
+        if(!$mes->indicadores){
+            $fecha = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($fecha)));
+        }
+        $topeSeguro = RentaTopeImponible::where('mes', $fecha)->where('nombre', $nombre)->first();
+        
+        if($topeSeguro){
+            return $topeSeguro->valor;
+        }
+        
+        return NULL;
+    }
+    
     static function rti()
     {        
         $mes = \Session::get('mesActivo')->mes;

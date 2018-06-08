@@ -144,8 +144,8 @@ class AniosRemuneracionesController extends \BaseController {
             'anios' => $listaAniosRemuneraciones,
             'datos' => $datosAnioRemuneracion,
             'isLiquidaciones' => AnioRemuneracion::isLiquidaciones(),
-            //'isCuentas' => AnioRemuneracion::isCuentas(),
-            'isCentralizado' => AnioRemuneracion::isCentralizado($mes->mes),
+            'isIndicadores' => $mes->indicadores,
+            'isCentralizado' => $anioRemuneracion->isCentralizado($mes->mes),
             'anio' => $anioRemuneracion
         );
         

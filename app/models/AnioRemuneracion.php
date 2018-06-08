@@ -5,7 +5,7 @@ class AnioRemuneracion extends Eloquent {
     protected $table = 'anios_remuneraciones';
     
     public function mesesDeTrabajo(){
-        return $this->hasMany('MesDeTrabajo', 'anio_id');
+        return $this->hasMany('MesDeTrabajo', 'anio_id')->orderBy('mes', 'ASC');
     }
     
     public function meses()
@@ -21,6 +21,27 @@ class AnioRemuneracion extends Eloquent {
                     'sid' => $mes->sid,
                     'nombre' => $mes->nombre,
                     'mes' => $mes->mes,
+                    'fechaRemuneracion' => $mes->fecha_remuneracion
+                );
+            }
+        }
+        
+        return $listaMeses;        
+    }
+    
+    public function misMeses()
+    {
+        $listaMeses = array();
+        $meses = $this->mesesDeTrabajo;
+        
+        if($meses->count()){
+            foreach($meses as $mes){
+                $listaMeses[$mes->mes] = array(
+                    'id' => $mes->id,
+                    'sid' => $mes->sid,
+                    'nombre' => $mes->nombre,
+                    'mes' => $mes->mes,
+                    'indicadores' => $mes->indicadores,
                     'fechaRemuneracion' => $mes->fecha_remuneracion
                 );
             }
@@ -154,95 +175,68 @@ class AnioRemuneracion extends Eloquent {
         return $bool;    
     }
     
-    public function isIniciado($mes)
-    {
-        $id = $this->id;
-        $isMes = MesDeTrabajo::where('anio_id', $id)->where('nombre', $mes)->first();
-        $bool = false; 
-        if($isMes){
-            $bool = true; 
-        }
-        
-        return $bool;
-    }
-    
     public function isDisponible($mes)
     {
         $empresa =  \Session::get('empresa');
-        $disponible = false; 
-        $isIngresado = false;
-        $anio = $this->anio;
-        $fechaActual = Funciones::obtenerFechaMes($mes, $anio);
-        $fecha = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($fechaActual)));
-        $date = date('Y-m-d');
-        $textMes = strtolower($mes);
-        $mesActual = $this;
-        $fechaInicial = VariableSistema::where('variable', 'mes_inicial')->first();
-        $fechaInicial = date($fechaInicial['valor1']);
         
         Config::set('database.default', 'admin' );                
-        $isIngresado = DB::table('meses')->where('mes', $fechaActual)->first();
+        $isDisponible = DB::table('meses')->where('mes', $mes)->first();
         Config::set('database.default', $empresa->base_datos );
         
-        if($fecha<=$date && $fechaActual>=$fechaInicial && ($isIngresado || ($mes=="Enero" && $anio==2018) ) ){
-            $disponible = true;
-        }
-        
-        return $disponible;
-    }
-    
-    public function isDisponibleSinIndicadores($mes)
-    {
-        $empresa =  \Session::get('empresa');
-        $disponible = false; 
-        $isIngresado = false;
-        $anio = $this->anio;
-        $fechaActual = Funciones::obtenerFechaMes($mes, $anio);
-        $fecha = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($fechaActual)));
-        $date = date('Y-m-d');
-        $textMes = strtolower($mes);
-        $mesActual = $this;
-        $fechaInicial = VariableSistema::where('variable', 'mes_inicial')->first();
-        $fechaInicial = date($fechaInicial['valor1']);
-        
-        Config::set('database.default', 'admin' );                
-        $isIngresado = DB::table('meses')->where('mes', $fechaActual)->first();
-        Config::set('database.default', $empresa->base_datos );
-        
-        if($fecha<=$date && $fechaActual>=$fechaInicial && ($isIngresado || ($mes=="Enero" && $anio==2018) ) ){
-            $disponible = true;
-        }
-        
-        return $disponible;
-    }
-    
-    static function isCentralizado($mes)
-    {
-        $centralizacion = ComprobanteCentralizacion::where('mes', $mes)->get();
-        if($centralizacion->count()){
+        if($isDisponible){
             return true;
         }
         
         return false;
     }
     
-    public function isIndicadores($mes)
+    public function isCentralizado($mes)
     {
-        $bool = false;
-        $indicadores = MesDeTrabajo::where('mes', $mes)->first();        
-        if($indicadores){
-            $bool = $indicadores->indicadores ? true : false;
+        $centralizacion = ComprobanteCentralizacion::where('mes', $mes)->first();
+        if($centralizacion){
+            return true;
         }
         
-        return $bool;
+        return false;
     }
     
     public function estadoMeses()
     {
         $estadoMeses = array();
         $anio = $this->anio;
-        $meses = Config::get('constants.meses');
+        $meses = Funciones::listaMeses($anio);
+        $misMeses = $this->misMeses();
         
+        foreach($meses as $mes){
+            $isIniciado = isset($misMeses[$mes['mes']]);
+            $isDisponible = true;
+            $isIndicadores = false;
+            $disponibleSinIndicadores = false;            
+            $var = strtolower($mes['nombre']);
+            
+            if($isIniciado){                
+                $isIndicadores = $misMeses[$mes['mes']]['indicadores'] ? true : false;
+                if(!$isIndicadores){
+                    $isDisponible = $this->isDisponible($mes['mes']);    
+                }
+            }else{
+                $isDisponible = $this->isDisponible($mes['mes']);
+                $disponibleSinIndicadores = (!$isDisponible);
+            }
+            
+            $estadoMeses[] = array(
+                'nombre' => $mes['nombre'],
+                'abierto' => $this->$var ? true : false,
+                'iniciado' => isset($misMeses[$mes['mes']]),
+                'disponible' => $isDisponible, 
+                'indicadores' => $isIndicadores, 
+                'mes' => $mes['mes'],
+                'fechaRemuneracion' => $mes['fechaRemuneracion'],
+                'isCentralizado' => $this->isCentralizado($mes['mes']),
+                'disponibleSinIndicadores' => $disponibleSinIndicadores
+            );            
+        }
+        /*
         foreach($meses as $mes){
             $nombre = strtolower($mes['value']);
             $isIniciado = $this->isIniciado($mes['value']);
@@ -252,7 +246,8 @@ class AnioRemuneracion extends Eloquent {
             if(!$isIniciado){
                 $isDisponible = $this->isDisponible($mes['value']);
             }else{
-                $isIndicadores = $this->isIndicadores($fecha);                
+                $isIndicadores = $this->isIndicadores($fecha);    
+                $isDisponible = $this->isDisponible($mes['value']);
             }
             $estadoMeses[] = array(
                 'nombre' => $mes['value'],
@@ -265,7 +260,7 @@ class AnioRemuneracion extends Eloquent {
                 'isCentralizado' => AnioRemuneracion::isCentralizado(Funciones::obtenerFechaMes($mes['value'], $anio)),
                 'disponibleSinIndicadores' => $this->isDisponibleSinIndicadores($mes['value'])
             );            
-        }            
+        } */           
 
         return $estadoMeses;
     }

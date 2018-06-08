@@ -91,6 +91,7 @@ class LicenciasController extends \BaseController {
                 'errores' => $errores
             );
         } 
+        
         return Response::json($respuesta);
     }    
 
@@ -120,10 +121,8 @@ class LicenciasController extends \BaseController {
     
     public function show($sid)
     {
-        $permisos = MenuSistema::obtenerPermisosAccesosURL(Auth::usuario()->user(), '#apvs');
+        $permisos = MenuSistema::obtenerPermisosAccesosURL(Auth::usuario()->user(), '#ingreso-licencias');
         $datosLicencia = null;
-        $afps = Glosa::listaAfpsApvs();
-        $formasPago = Glosa::listaFormasPago();
         $trabajadores = array();
         
         if($sid){

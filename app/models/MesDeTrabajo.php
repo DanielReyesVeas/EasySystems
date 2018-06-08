@@ -103,7 +103,11 @@ class MesDeTrabajo extends Eloquent {
         }
         
         if($mesDeTrabajo){
-            $indicadores = ValorIndicador::where('mes', $mesDeTrabajo->mes)->orderBy('indicador_id', 'ASC')->get();
+            $fecha = $mesDeTrabajo->mes;
+            if($mesDeTrabajo->indicadores==0){
+                $fecha = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($fecha)));
+            }
+            $indicadores = ValorIndicador::where('mes', $fecha)->orderBy('indicador_id', 'ASC')->get();
             
             if(count($indicadores)){
                 $uf = $indicadores[0]->valor;

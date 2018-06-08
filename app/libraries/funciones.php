@@ -1593,6 +1593,23 @@ class Funciones{
         return $anio . "-" . $mes . "-01";
     }
     
+    static function listaMeses($anio)
+    {
+        $meses = Config::get('constants.meses');    
+        $lista = array();
+        foreach($meses as $mes){
+            $fecha = Funciones::obtenerFechaMes($mes['mes'], $anio);
+            $fechaRemuneracion = Funciones::obtenerFechaRemuneracionMes($mes['mes'], $anio);
+            $lista[] = array(
+                'nombre' => $mes['value'],
+                'mes' => $fecha,
+                'fechaRemuneracion' => $fechaRemuneracion
+            );
+        }
+        
+        return $lista;
+    }
+    
     static function regularizarFecha($fecha){
         if($fecha){
             if(is_array($fecha)){

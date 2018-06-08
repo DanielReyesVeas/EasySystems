@@ -5,8 +5,8 @@ class TasaCotizacionObligatorioAfp extends Eloquent {
     protected $table = 'tasa_cotizacion_obligatorio_afp';
     protected $connection = "principal";
     
-    static function listaTasaCotizacionObligatorioAfp($mes=null){
-        
+    static function listaTasaCotizacionObligatorioAfp($mes=null)
+    {        
         if(!$mes){
             $mes = \Session::get('mesActivo')->mes;
         }
@@ -28,6 +28,26 @@ class TasaCotizacionObligatorioAfp extends Eloquent {
             }
     	}
     	return $listaTasaCotizacionObligatorioAfp;
+    }
+    
+    static function valor($afp, $tipo)
+    {
+        $mes = Session::get('mesActivo');
+        $fecha = $mes->mes;
+        if(!$mes->indicadores){
+            $fecha = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($fecha)));
+        }
+        $cotizacion = TasaCotizacionObligatorioAfp::where('mes', $fecha)->where('afp_id', $afp)->first();
+        
+        if($cotizacion){
+            if($tipo=='tasa'){
+                return $cotizacion->tasa_afp;
+            }else{
+                return $cotizacion->sis;
+            }
+        }
+
+        return NULL;
     }
     
     static function errores($datos){

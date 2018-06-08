@@ -106,29 +106,43 @@ class CargasController extends \BaseController {
      * @return Response
      */
     public function show($sid)
-    {
-        $carga = Carga::whereSid($sid)->first();
-
-        $datos=array(
-            'id' => $carga->id,
-            'sid' => $carga->sid,
-            'idTrabajador' => $carga->trabajador_id,
-            'rut' => $carga->rut,
-            'parentesco' => $carga->parentesco,
-            'nombreCompleto' => $carga->nombre_completo,
-            'fechaNacimiento' => $carga->fecha_nacimiento,
-            'fechaAutorizacion' => $carga->fecha_autorizacion,
-            'fechaPagoDesde' => $carga->fecha_pago_desde,
-            'fechaPagoHasta' => $carga->fecha_pago_hasta,
-            'tipo' => array(
-                'id' => $carga->tipoCarga->id,
-                'nombre' => $carga->tipoCarga->nombre
-            ),
-            'sexo' => $carga->sexo,
-            'esCarga' => $carga->es_carga ? true : false,
-            'esAutorizada' => $carga->es_autorizada ? true : false,
-            'trabajador' => $carga->trabajadorCarga()
+    {        
+        $permisos = MenuSistema::obtenerPermisosAccesosURL(Auth::usuario()->user(), '#cargas-familiares');
+        $datosCarga = null;
+        $trabajadores = array();
+        
+        if($sid){
+            $carga = Carga::whereSid($sid)->first();
+            $datosCarga=array(
+                'id' => $carga->id,
+                'sid' => $carga->sid,
+                'idTrabajador' => $carga->trabajador_id,
+                'rut' => $carga->rut,
+                'parentesco' => $carga->parentesco,
+                'nombreCompleto' => $carga->nombre_completo,
+                'fechaNacimiento' => $carga->fecha_nacimiento,
+                'fechaAutorizacion' => $carga->fecha_autorizacion,
+                'fechaPagoDesde' => $carga->fecha_pago_desde,
+                'fechaPagoHasta' => $carga->fecha_pago_hasta,
+                'tipo' => array(
+                    'id' => $carga->tipoCarga->id,
+                    'nombre' => $carga->tipoCarga->nombre
+                ),
+                'sexo' => $carga->sexo,
+                'esCarga' => $carga->es_carga ? true : false,
+                'esAutorizada' => $carga->es_autorizada ? true : false,
+                'trabajador' => $carga->trabajadorCarga()
+            );
+        }else{
+            $trabajadores = Trabajador::activosFiniquitados();
+        }
+        
+        $datos = array(
+            'accesos' => $permisos,
+            'datos' => $datosCarga,
+            'trabajadores' => $trabajadores
         );
+        
         return Response::json($datos);
     }
 

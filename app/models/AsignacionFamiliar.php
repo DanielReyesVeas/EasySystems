@@ -29,7 +29,11 @@ class AsignacionFamiliar extends Eloquent {
     }
     
     static function listaTramos(){
-        $mes = \Session::get('mesActivo')->mes;        
+        $mes = \Session::get('mesActivo');
+        $fecha = $mes->mes;
+        if(!$mes->indicadores){
+            $fecha = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($fecha)));
+        }
     	$listaTramos = array();
     	$tramos = AsignacionFamiliar::where('mes', $mes)->orderBy('tramo', 'ASC')->get();
         

@@ -274,9 +274,9 @@ class LiquidacionesController extends \BaseController {
     
     public function libroRemuneraciones()
     {        
-        $mes = \Session::get('mesActivo')->mes;
+        $mes = \Session::get('mesActivo');
         $empresa = \Session::get('empresa');
-        $liquidaciones = Liquidacion::where('mes', $mes)->get();
+        $liquidaciones = Liquidacion::where('mes', $mes->mes)->get();
         $listaLiquidaciones=array();
         $sumaSueldoBase = 0;
         $sumaInasistenciasAtrasos = 0;
@@ -375,6 +375,7 @@ class LiquidacionesController extends \BaseController {
                 'editar' => true
             ),
             'datos' => $listaLiquidaciones,
+            'isIndicadores' => $mes->indicadores,
             'totales' => array(
                 'totalSueldoBase' => $sumaSueldoBase,
                 'totalInasistenciasAtrasos' => $sumaInasistenciasAtrasos,
@@ -575,9 +576,9 @@ class LiquidacionesController extends \BaseController {
         if(count($liquidaciones)){            
             foreach($liquidaciones as $liquidacion){
                 if($liquidacion['cuerpo']){
-                    $html = $html . $liquidacion['cuerpo'];                
+                    $html = $html . $liquidacion['cuerpo'] . '<div style="page-break-after: always;"></div>';                
                 }else{
-                    $html = $html . $liquidacion->generarCuerpo();
+                    $html = $html . $liquidacion->generarCuerpo() . '<div style="page-break-after: always;"></div>';
                 }
             }
             $destination = public_path() . '/stories/liquidaciones.pdf';

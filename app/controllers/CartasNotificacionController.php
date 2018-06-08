@@ -108,6 +108,7 @@ class CartasNotificacionController extends \BaseController {
                 'errores' => $errores
             );
         } 
+        
         return Response::json($respuesta);
     }    
 
@@ -118,32 +119,40 @@ class CartasNotificacionController extends \BaseController {
      * @return Response
      */
     public function show($sid)
-    {
-        $cartaNotificacion = CartaNotificacion::whereSid($sid)->first();
-
-        $carta = array(
-            'id' => $cartaNotificacion->id,
-            'sid' => $cartaNotificacion->sid,
-            'cuerpo' => $cartaNotificacion->cuerpo            
-        );
+    {        
+        $permisos = MenuSistema::obtenerPermisosAccesosURL(Auth::usuario()->user(), '#cartas-de-notificacion');
+        $datosCarta = null;
+        $trabajadores = array();
+        $trabajador = null;
+        $plantillas = PlantillaCartaNotificacion::plantillas();
         
-        $trabajador = array(
-            'nombreCompleto' => $cartaNotificacion->trabajador_nombre_completo,
-            'direccion' => $cartaNotificacion->trabajador_direccion,
-            'comuna' => array(
-                'comuna' => $cartaNotificacion->trabajador_comuna,
-                'provincia' => $cartaNotificacion->trabajador_provincia, 
-            ),                                               
-            'fechaIngreso' => $cartaNotificacion->trabajador_fecha_ingreso
-        );
+        if($sid){
+            $cartaNotificacion = CartaNotificacion::whereSid($sid)->first();
+            $datosCarta=array(
+                'id' => $cartaNotificacion->id,
+                'sid' => $cartaNotificacion->sid,
+                'cuerpo' => $cartaNotificacion->cuerpo,
+                'trabajador' => $cartaNotificacion->trabajadorCarta()
+            );
+            $trabajador = array(
+                'nombreCompleto' => $cartaNotificacion->trabajador_nombre_completo,
+                'direccion' => $cartaNotificacion->trabajador_direccion,
+                'comuna' => array(
+                    'comuna' => $cartaNotificacion->trabajador_comuna,
+                    'provincia' => $cartaNotificacion->trabajador_provincia, 
+                ),                                               
+                'fechaIngreso' => $cartaNotificacion->trabajador_fecha_ingreso
+            );
+        }else{
+            $trabajadores = Trabajador::activosFiniquitados();
+        }
         
         $datos = array(
-            'accesos' => array(
-                'ver' => true,
-                'editar' => true
-            ),
-            'datos' => $carta,
-            'trabajador' => $trabajador
+            'accesos' => $permisos,
+            'datos' => $datosCarta,
+            'trabajadores' => $trabajadores,
+            'trabajador' => $trabajador,
+            'plantillas' => $plantillas
         );
         
         return Response::json($datos);
@@ -204,6 +213,7 @@ class CartasNotificacionController extends \BaseController {
                 'errores' => $errores
             );
         } 
+        
         return Response::json($respuesta);
     }
 
@@ -252,6 +262,7 @@ class CartasNotificacionController extends \BaseController {
             'inasistencias' => Input::get('inasistencias'),
             'fecha' => Input::get('fecha')
         );
+        
         return $datos;
     }
 

@@ -38,6 +38,26 @@ class MesDeTrabajoController extends \BaseController {
         );
     	return $datos;
     }
+    
+    public function cargarIndicadores()
+    {
+        $empresa =  \Session::get('empresa');             
+        $datos = Input::all();
+        $mes = MesDeTrabajo::where('mes', $datos['mes'])->first();
+        ValorIndicador::crearIndicadores($mes->mes, $mes->fecha_remuneracion);
+        Config::set('database.default', $empresa->base_datos );
+        $mes->indicadores = 1;
+        $mes->save();
+        
+        $respuesta = array(
+            'success' => true,
+            'mensaje' => "La Información fue actualizada correctamente",
+            'mes' => $mes->mes,
+            'a' => $mes->fecha_remuneracion
+        );
+        
+    	return $respuesta;
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -126,9 +146,9 @@ class MesDeTrabajoController extends \BaseController {
         $mesDeTrabajo->anio_id = $idAnio;
         $mesDeTrabajo->indicadores = $datos['indicadores'];
         $mesDeTrabajo->save();
+        Trabajador::crearSemanasCorridas($mesDeTrabajo);
+        Trabajador::calcularVacaciones($mesDeTrabajo);
         if($datos['indicadores']){
-            Trabajador::crearSemanasCorridas($mesDeTrabajo);
-            Trabajador::calcularVacaciones($mesDeTrabajo);
             ValorIndicador::crearIndicadores($mesDeTrabajo->mes, $datos['fecha_remuneracion']);
         }
         Config::set('database.default', $empresa->base_datos );

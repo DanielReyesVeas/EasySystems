@@ -26,6 +26,28 @@ class SeguroDeCesantia extends Eloquent {
     	return $listaSeguroDeCesantia;
     }
     
+    static function valor($contrato, $tipo)
+    {
+        $mes = Session::get('mesActivo');
+        $fecha = $mes->mes;
+        if(!$mes->indicadores){
+            $fecha = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($fecha)));
+        }
+        if($tipo=='trabajador'){
+            $afc = SeguroDeCesantia::where('mes', $fecha)->where('tipo_contrato', $contrato)->first();
+            if($afc){
+                return $afc->financiamiento_trabajador;
+            }
+        }else{
+            $afc = SeguroDeCesantia::where('mes', $fecha)->where('tipo_contrato', $contrato)->first();   
+            if($afc){
+                return $afc->financiamiento_empleador;
+            }
+        }
+
+        return NULL;
+    }
+    
     static function errores($datos){
          
         $rules = array(

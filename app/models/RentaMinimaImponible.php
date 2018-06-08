@@ -27,9 +27,13 @@ class RentaMinimaImponible extends Eloquent {
     
     static function rmi()
     {        
-        $mes = \Session::get('mesActivo')->mes;
+        $mes = \Session::get('mesActivo');
+        $fecha = $mes->mes;
+        if(!$mes->indicadores){
+            $fecha = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($fecha)));
+        }
         $rmi = 0;        
-    	$rentaMinimaImponible = RentaMinimaImponible::where('mes', $mes)->where('nombre', 'Trab. Dependientes e Independientes')->first();
+    	$rentaMinimaImponible = RentaMinimaImponible::where('mes', $fecha)->where('nombre', 'Trab. Dependientes e Independientes')->first();
         
     	if( $rentaMinimaImponible ){
             $rmi = $rentaMinimaImponible;

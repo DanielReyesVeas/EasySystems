@@ -144,6 +144,8 @@ class ValorIndicador extends Eloquent {
                 $nuevaTabla->save();            
             }
         }
+        
+        return;
     }
     
     static function valorFecha($fecha)

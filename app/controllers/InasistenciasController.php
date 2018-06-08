@@ -58,33 +58,31 @@ class InasistenciasController extends \BaseController {
      */
     public function store()
     {
-        $datos = $this->get_datos_formulario();
+        $datos = Input::all();
         $errores = null;  
         
-        if(!$datos['dias']){
-            $datos['dias'] = (($datos['hasta'] - $datos['desde']) + 1);
-        }
-        
         if(!$errores){
-            $inasistencia = new Inasistencia();
-            $inasistencia->sid = Funciones::generarSID();
-            $inasistencia->trabajador_id = $datos['trabajador_id'];
-            $inasistencia->mes_id = $datos['mes_id'];
-            $inasistencia->dias = $datos['dias'];
-            $inasistencia->desde = $datos['desde'];
-            $inasistencia->hasta = $datos['hasta'];
-            $inasistencia->motivo = $datos['motivo'];
-            $inasistencia->observacion = $datos['observacion'];
-            $inasistencia->save();
-            
-            $trabajador = $inasistencia->trabajador;
-            $ficha = $trabajador->ficha();
-            Logs::crearLog('#ingreso-inasistencias', $trabajador->id, $ficha->nombreCompleto(), 'Create', $inasistencia->id, $inasistencia->dias, NULL);
+            foreach($datos as $dato){
+                $mes = MesDeTrabajo::where('mes', $dato['mes'])->first();
+                $inasistencia = new Inasistencia();
+                $inasistencia->sid = Funciones::generarSID();
+                $inasistencia->trabajador_id = $dato['idTrabajador'];
+                $inasistencia->mes_id = $mes->id;
+                $inasistencia->desde = $dato['desde'];
+                $inasistencia->hasta = $dato['hasta'];
+                $inasistencia->dias = $dato['dias'];
+                $inasistencia->motivo = $dato['motivo'];
+                $inasistencia->observacion = $dato['observacion'];
+                $inasistencia->save();
+
+                $trabajador = $inasistencia->trabajador;
+                $ficha = $trabajador->ficha();
+                Logs::crearLog('#ingreso-inasistencias', $trabajador->id, $ficha->nombreCompleto(), 'Create', $inasistencia->id, $inasistencia->dias, NULL);
+            }
             
             $respuesta=array(
             	'success' => true,
-            	'mensaje' => "La Información fue almacenada correctamente",
-            	'id' => $inasistencia->id
+            	'mensaje' => "La Información fue almacenada correctamente"
             );
         }else{
             $respuesta=array(
@@ -93,7 +91,8 @@ class InasistenciasController extends \BaseController {
                 'errores' => $errores
             );
         } 
-        return Response::json($respuesta);
+        
+        return Response::json($respuesta);                
     }    
 
     /**
@@ -103,21 +102,36 @@ class InasistenciasController extends \BaseController {
      * @return Response
      */
     public function show($sid)
-    {
-        $inasistencia = Inasistencia::whereSid($sid)->first();
+    {   
+        $permisos = MenuSistema::obtenerPermisosAccesosURL(Auth::usuario()->user(), '#ingreso-inasistencias');
+        $datosInasistencia = null;
+        $trabajadores = array();
+        
+        if($sid){
+            $inasistencia = Inasistencia::whereSid($sid)->first();
 
-        $datos=array(
-            'id' => $inasistencia->id,
-            'sid' => $inasistencia->sid,            
-            'idMes' => $inasistencia->mes_id,
-            'desde' => $inasistencia->desde,
-            'hasta' => $inasistencia->hasta,
-            'motivo' => $inasistencia->motivo,
-            'observacion' => $inasistencia->observacion,
-            'dias' => $inasistencia->dias,        
-            'trabajador' => $inasistencia->trabajadorInasistencia()
+            $datosInasistencia=array(                
+                'id' => $inasistencia->id,
+                'sid' => $inasistencia->sid,            
+                'idMes' => $inasistencia->mes_id,
+                'desde' => $inasistencia->desde,
+                'hasta' => $inasistencia->hasta,
+                'motivo' => $inasistencia->motivo,
+                'observacion' => $inasistencia->observacion,
+                'dias' => $inasistencia->dias,        
+                'trabajador' => $inasistencia->trabajadorInasistencia()
+            );
+        }else{
+            $trabajadores = Trabajador::activosFiniquitados();
+        }
+        
+        $datos = array(
+            'accesos' => $permisos,
+            'datos' => $datosInasistencia,
+            'trabajadores' => $trabajadores
         );
-        return Response::json($datos);
+        
+        return Response::json($datos);                
     }
 
     /**

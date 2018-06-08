@@ -6,7 +6,7 @@ use GuzzleHttp\Client;
 //ini_set('display_errors', 'On');
 
 ini_set('max_execution_time', 30000);
-define('VERSION_SISTEMA', '1.6.9');
+define('VERSION_SISTEMA', '1.7.3');
 ini_set('memory_limit', '3048M');
 
 if(Config::get('cliente.LOCAL')){
@@ -1962,6 +1962,7 @@ Route::group(array('before'=>'auth_ajax'), function() {
     Route::get('mes-de-trabajo/detalle-centralizacion/obtener/{mes}', 'MesDeTrabajoController@detalleCentralizacion');
     Route::post('mes-de-trabajo/pre-centralizar/obtener', 'MesDeTrabajoController@preCentralizar');
     Route::post('mes-de-trabajo/centralizar/obtener', 'MesDeTrabajoController@centralizar');
+    Route::post('mes-de-trabajo/cargar-indicadores/obtener', 'MesDeTrabajoController@cargarIndicadores');
     
     /*   ANIOS    */
     Route::resource('anios', 'AniosRemuneracionesController');

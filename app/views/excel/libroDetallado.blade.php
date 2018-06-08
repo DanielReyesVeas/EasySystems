@@ -70,7 +70,7 @@
                     @endforeach    
                     @if($datos->conceptos['salud'])<th>Salud</th>@endif        
                     @if($datos->conceptos['seguro_cesantia'])<th>Seg. Ces.</th>@endif         
-                    @if($datos->conceptos['anticipos'])<th>Anticipos</th>@endif        
+                    @if($datos->conceptos['anticipos'])<th>Tot. Anticipos</th>@endif        
                     @if($datos->conceptos['impuesto'])<th>Imp. Unico</th>@endif        
                     @foreach($datos->descuentos as $descuento)
                         <th>{{ $descuento }}</th>

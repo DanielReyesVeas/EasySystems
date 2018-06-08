@@ -8,6 +8,20 @@ class CartaNotificacion extends Eloquent {
         return $this->belongsTo('Trabajador','trabajador_id');
     }
     
+    public function trabajadorCarta(){        
+        if( $this->trabajador ){
+            $trabajador = $this->trabajador;
+            $empleado = $trabajador->ficha();
+            $datosTrabajador = array(
+                'id' => $trabajador->id,
+                'sid' => $trabajador->sid,
+                'nombreCompleto' => $empleado->nombreCompleto(),
+                'rutFormato' => $trabajador->rut_formato()
+            );        
+        }
+        return $datosTrabajador;
+    }
+    
     public function plantillaCartaNotificacion(){
         return $this->belongsTo('PlantillaCartaNotificacion','plantilla_carta_id');
     }

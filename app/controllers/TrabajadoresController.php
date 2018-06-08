@@ -5,7 +5,8 @@ class TrabajadoresController extends \BaseController {
      *
      * @return Response
      */
-    public function miLiquidacionObservaciones_store(){
+    public function miLiquidacionObservaciones_store()
+    {
         $mes = \Session::get('mesActivo');
         $sidTrabajador = Input::get('sidTrabajador');
         $observaciones = Input::get('observaciones');
@@ -126,9 +127,6 @@ class TrabajadoresController extends \BaseController {
                                 $haberes['noImponibles'][$index] = $detalle->nombre;                        
                                 $liquidacion->$index = isset($liquidacion->$index) ? ($liquidacion->$index + $detalle->valor) : $detalle->valor;
                                 $sumas['noImponibles'][$index] = isset($sumas['noImponibles'][$index]) ? ($sumas['noImponibles'][$index] + $detalle->valor) : $detalle->valor;
-                                if($detalle->detalle_id==4){
-                                    $haberes['noImponibles'][$index] = 'Movilización Permanente';  
-                                }
                             }
                         }else{
                             $index = $detalle->tipo_id . '-' . $detalle->detalle_id;
@@ -1604,8 +1602,7 @@ class TrabajadoresController extends \BaseController {
                 'errores' => $errores
             );
         }
-        
-        
+                
         return Response::json($respuesta);
     }
     
@@ -1857,9 +1854,6 @@ class TrabajadoresController extends \BaseController {
                             $listaErrores[] = 'El Cargo "' . $dato['cargo'] . '" no existe.';
                             $isError = true;
                         }
-                    }else{
-                        $listaErrores[] = 'El campo Cargo es obligatorio.';
-                        $isError = true;
                     }                
                     if(isset($dato['titulo'])){
                         if(!in_array($dato['titulo'], $titulos)){
@@ -1872,9 +1866,6 @@ class TrabajadoresController extends \BaseController {
                             $listaErrores[] = 'La Sección "' . $dato['seccion'] . '" no existe.';
                             $isError = true;
                         }
-                    }else{
-                        $listaErrores[] = 'El campo Sección es obligatorio.';
-                        $isError = true;
                     }
                     if(isset($dato['centroCosto'])){
                         if(!in_array($dato['centroCosto'], $centrosCosto)){
@@ -3423,22 +3414,24 @@ class TrabajadoresController extends \BaseController {
                 $empleado = $trabajador->ficha();
                 if($empleado){
                     if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes){
-                        $idTrabajador = $trabajador->id;
-                        $listaTrabajadores[]=array(
-                            'id' => $trabajador->id,
-                            'sid' => $trabajador->sid,
-                            'rut' => $trabajador->rut,          
-                            'rutFormato' => $trabajador->rut_formato(),          
-                            'apellidos' => ucwords(strtolower($empleado->apellidos)),
-                            'nombreCompleto' => $empleado->nombreCompleto(),
-                            'cargoOrden' => $empleado->cargo ? ucwords(strtolower($empleado->cargo->nombre)) : "", 
-                            'cargo' => array(
-                                'id' => $empleado->cargo ? $empleado->cargo->id : "",
-                                'nombre' => $empleado->cargo ? $empleado->cargo->nombre : "",
-                            ),                     
-                            'totalCartasNotificacion' => $trabajador->totalCartasNotificacion()
+                        $cartas = $trabajador->totalCartasNotificacion();
+                        if($cartas){
+                            $listaTrabajadores[]=array(
+                                'id' => $trabajador->id,
+                                'sid' => $trabajador->sid,
+                                'rut' => $trabajador->rut,          
+                                'rutFormato' => $trabajador->rut_formato(),          
+                                'apellidos' => ucwords(strtolower($empleado->apellidos)),
+                                'nombreCompleto' => $empleado->nombreCompleto(),
+                                'cargoOrden' => $empleado->cargo ? ucwords(strtolower($empleado->cargo->nombre)) : "", 
+                                'cargo' => array(
+                                    'id' => $empleado->cargo ? $empleado->cargo->id : "",
+                                    'nombre' => $empleado->cargo ? $empleado->cargo->nombre : "",
+                                ),                     
+                                'totalCartasNotificacion' => $cartas
 
-                        );
+                            );
+                        }
                     }
                 }
             }
@@ -4984,6 +4977,7 @@ class TrabajadoresController extends \BaseController {
     public function finiquito()
     {
         $datos = Input::all();
+        $mes = \Session::get('mesActivo');
         $sidTrabajador = $datos['sidTrabajador'];
         $sidPlantilla = $datos['sidPlantilla'];
         $plantilla = PlantillaFiniquito::whereSid($sidPlantilla)->first();
@@ -5127,7 +5121,8 @@ class TrabajadoresController extends \BaseController {
             'representante' => $datosRepresentante,
             'empresa' => array(
                 'domicilio' => $empresa->domicilio()
-            )
+            ),
+            'isIndicadores' => $mes->indicadores
         );
         
         return Response::json($datos);
@@ -5816,21 +5811,23 @@ class TrabajadoresController extends \BaseController {
                 $empleado = $trabajador->ficha();
                 if($empleado){
                     if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes || $empleado->estado=='Finiquitado' && $empleado->fecha_finiquito < $finMes && $empleado->fecha_finiquito >= $mesAnterior){
-                        $idTrabajador = $trabajador->id;
-                        $listaTrabajadores[] = array(
-                            'id' => $trabajador->id,
-                            'sid' => $trabajador->sid,
-                            'rutFormato' => $trabajador->rut_formato(),
-                            'rut' => $trabajador->rut,
-                            'apellidos' => ucwords(strtolower($empleado->apellidos)),
-                            'cargoOrden' => $empleado->cargo ? ucwords(strtolower($empleado->cargo->nombre)) : "",
-                            'cargo' => array(
-                                'id' => $empleado->cargo ? $empleado->cargo->id : "",
-                                'nombre' => $empleado->cargo ? $empleado->cargo->nombre : ""
-                            ),
-                            'nombreCompleto' => $empleado->nombreCompleto(),
-                            'totalInasistencias' => $trabajador->totalInasistencias()
-                        );
+                        $totalInasistencias = $trabajador->totalInasistencias();
+                        if($totalInasistencias){
+                            $listaTrabajadores[] = array(
+                                'id' => $trabajador->id,
+                                'sid' => $trabajador->sid,
+                                'rutFormato' => $trabajador->rut_formato(),
+                                'rut' => $trabajador->rut,
+                                'apellidos' => ucwords(strtolower($empleado->apellidos)),
+                                'cargoOrden' => $empleado->cargo ? ucwords(strtolower($empleado->cargo->nombre)) : "",
+                                'cargo' => array(
+                                    'id' => $empleado->cargo ? $empleado->cargo->id : "",
+                                    'nombre' => $empleado->cargo ? $empleado->cargo->nombre : ""
+                                ),
+                                'nombreCompleto' => $empleado->nombreCompleto(),
+                                'totalInasistencias' => $totalInasistencias
+                            );
+                        }
                     }
                 }
             }
@@ -5886,22 +5883,24 @@ class TrabajadoresController extends \BaseController {
                     if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes || $empleado->estado=='Finiquitado' && $empleado->fecha_finiquito < $finMes && $empleado->fecha_finiquito >= $mesAnterior){
                         $idTrabajador = $trabajador->id;
                         $atrasos = $trabajador->totalAtrasos();
-                        $listaTrabajadores[] = array(
-                            'id' => $trabajador->id,
-                            'sid' => $trabajador->sid,
-                            'rutFormato' => $trabajador->rut_formato(),
-                            'rut' => $trabajador->rut,
-                            'apellidos' => ucwords(strtolower($empleado->apellidos)),
-                            'cargoOrden' => $empleado->cargo ? ucwords(strtolower($empleado->cargo->nombre)) : "",
-                            'cargo' => array(
-                                'id' => $empleado->cargo ? $empleado->cargo->id : "",
-                                'nombre' => $empleado->cargo ? $empleado->cargo->nombre : ""
-                            ),
-                            'nombreCompleto' => $empleado->nombreCompleto(),
-                            'total' => $atrasos['total'],
-                            'atrasos' => $atrasos['atrasos'],
-                            'jornada' => $trabajador->horasJornada()
-                        );
+                        if($atrasos['atrasos']){
+                            $listaTrabajadores[] = array(
+                                'id' => $trabajador->id,
+                                'sid' => $trabajador->sid,
+                                'rutFormato' => $trabajador->rut_formato(),
+                                'rut' => $trabajador->rut,
+                                'apellidos' => ucwords(strtolower($empleado->apellidos)),
+                                'cargoOrden' => $empleado->cargo ? ucwords(strtolower($empleado->cargo->nombre)) : "",
+                                'cargo' => array(
+                                    'id' => $empleado->cargo ? $empleado->cargo->id : "",
+                                    'nombre' => $empleado->cargo ? $empleado->cargo->nombre : ""
+                                ),
+                                'nombreCompleto' => $empleado->nombreCompleto(),
+                                'total' => $atrasos['total'],
+                                'atrasos' => $atrasos['atrasos'],
+                                'jornada' => $trabajador->horasJornada()
+                            );
+                        }
                     }
                 }
             }
@@ -6023,7 +6022,6 @@ class TrabajadoresController extends \BaseController {
                 $empleado = $trabajador->ficha();
                 if($empleado){
                     if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes || $empleado->estado=='Finiquitado' && $empleado->fecha_finiquito < $finMes && $empleado->fecha_finiquito >= $mesAnterior){
-                        $idTrabajador = $trabajador->id;
                         $horasExtra = $trabajador->totalHorasExtra();
                         if($horasExtra){
                             $listaTrabajadores[] = array(
@@ -6045,7 +6043,7 @@ class TrabajadoresController extends \BaseController {
                                 ),
                                 'tramos' => $trabajador->tramosHorasExtra(),
                                 'nombreCompleto' => $empleado->nombreCompleto(),
-                                'totalHorasExtra' => $trabajador->totalHorasExtra()
+                                'totalHorasExtra' => $horasExtra
                             );
                         }
                     }
@@ -6231,19 +6229,21 @@ class TrabajadoresController extends \BaseController {
                 $empleado = $trabajador->ficha();
                 if($empleado){
                     if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes){
-                        $idTrabajador = $trabajador->id;
-                        $listaTrabajadores[] = array(
-                            'id' => $trabajador->id,
-                            'sid' => $trabajador->sid,
-                            'tramo' => strtoupper($empleado->tramo_id),
-                            'rutFormato' => $trabajador->rut_formato(),
-                            'rut' => $trabajador->rut,
-                            'apellidos' => ucwords(strtolower($empleado->apellidos)),
-                            'nombreCompleto' => $empleado->nombreCompleto(),
-                            'cargasFamiliares' => $trabajador->totalCargasFamiliares(),
-                            'grupoFamiliar' => $trabajador->totalGrupoFamiliar(),
-                            'cargasAutorizadas' => $trabajador->totalCargasAutorizadas(),
-                        );
+                        $totalGrupoFamiliar = $trabajador->totalGrupoFamiliar();
+                        if($totalGrupoFamiliar){
+                            $listaTrabajadores[] = array(
+                                'id' => $trabajador->id,
+                                'sid' => $trabajador->sid,
+                                'tramo' => strtoupper($empleado->tramo_id),
+                                'rutFormato' => $trabajador->rut_formato(),
+                                'rut' => $trabajador->rut,
+                                'apellidos' => ucwords(strtolower($empleado->apellidos)),
+                                'nombreCompleto' => $empleado->nombreCompleto(),
+                                'cargasFamiliares' => $trabajador->totalCargasFamiliares(),
+                                'grupoFamiliar' => $totalGrupoFamiliar,
+                                'cargasAutorizadas' => $trabajador->totalCargasAutorizadas(),
+                            );
+                        }
                     }
                 }
             }
@@ -6335,8 +6335,7 @@ class TrabajadoresController extends \BaseController {
     }
     
     public function trabajadorAutorizarCargas()
-    {        
-        
+    {                
         $datos = Input::all();
         $sidTrabajador = $datos['sidTrabajador'];
         $trabajador = Trabajador::whereSid($sidTrabajador)->first();
@@ -6403,6 +6402,7 @@ class TrabajadoresController extends \BaseController {
             'accesos' => $permisos,
             'datos' => $trabajadorDescuentos
         );
+        
         return Response::json($datos);     
     }    
     
@@ -6415,7 +6415,7 @@ class TrabajadoresController extends \BaseController {
      */
     public function show($sid)
     {
-        
+        $mes = \Session::get('mesActivo');
         $listaSecciones=array();
         Seccion::listaSecciones($listaSecciones, 0, 1);
         $listaCentrosCosto=array();
@@ -6453,9 +6453,7 @@ class TrabajadoresController extends \BaseController {
         
         if($sid){
             $trabajador = Trabajador::whereSid($sid)->first();
-            $idTrabajador = $trabajador->id;
-            $mes = \Session::get('mesActivo')->mes;
-            $idMes = \Session::get('mesActivo')->id;   
+            $idTrabajador = $trabajador->id;            
             $empleado = $trabajador->ficha();
             $sueldoBase = $empleado->sueldo_base;
             if($empleado->moneda_sueldo=='$'){
@@ -6601,8 +6599,6 @@ class TrabajadoresController extends \BaseController {
                 )
             );
         }
-
-
         
         $datos = array(
             'accesos' => array(
@@ -6610,7 +6606,8 @@ class TrabajadoresController extends \BaseController {
                 'editar' => true
             ),
             'trabajador' => $datosTrabajador,
-            'formulario' => $datosFormulario
+            'formulario' => $datosFormulario,
+            'isIndicadores' => $mes->indicadores
         );
         
         return Response::json($datos);
@@ -6634,8 +6631,7 @@ class TrabajadoresController extends \BaseController {
             ->get();*/
         
         $trabajadores = Trabajador::all();
-        
-        
+                
         $listaActivos = array();
         if($trabajadores){
             foreach($trabajadores as $trabajador){
@@ -6720,8 +6716,7 @@ class TrabajadoresController extends \BaseController {
     }
     
     public function archivoPrevired()
-    {
-        
+    {        
         if(!\Session::get('empresa')){
             return Response::json(array('activos' => array(), 'conLiquidacion' => array(), 'permisos' => array()));
         }
@@ -6729,8 +6724,12 @@ class TrabajadoresController extends \BaseController {
         $mesActual = \Session::get('mesActivo');
         $finMes = $mesActual->fechaRemuneracion;
         $mes = $mesActual->mes;
-        $mesAnterior = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($mes)));
-        $finMesAnterior = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($finMes)));
+        $mostrarFiniquitados = Empresa::variableConfiguracion('finiquitados_liquidacion');
+        if($mostrarFiniquitados){
+            $mesAnterior = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($mes)));
+        }else{
+            $mesAnterior = $mes;
+        }
         $trabajadores = Trabajador::all();
         
         $listaActivos = array();
@@ -6773,7 +6772,8 @@ class TrabajadoresController extends \BaseController {
         $datos = array(
             'accesos' => $permisos,
             'datos' => $listaActivos,
-            'isLiquidaciones' => AnioRemuneracion::isLiquidaciones()
+            'isLiquidaciones' => AnioRemuneracion::isLiquidaciones(),
+            'isIndicadores' => $mesActual->indicadores
         );
         
         return Response::json($datos); 
@@ -6977,8 +6977,8 @@ class TrabajadoresController extends \BaseController {
             $diasTrabajados = $trabajador->diasTrabajados();
             $horasExtra = $trabajador->horasExtraPagar();
             if($comprobarRentaImponibleAnterior){
-                $totalAfp = $trabajador->totalAfp($listaRentaImponibleAnteriorSIS[$trabajador->id]);
-                $totalSeguroCesantia = $trabajador->totalSeguroCesantia($listaRentaImponibleAnteriorSC[$trabajador->id]);
+                $totalAfp = $trabajador->totalAfp($listaRentaImponibleAnteriorSIS[0]);
+                $totalSeguroCesantia = $trabajador->totalSeguroCesantia($listaRentaImponibleAnteriorSC[0]);
             }else{
                 $totalAfp = $trabajador->totalAfp();
                 $totalSeguroCesantia = $trabajador->totalSeguroCesantia();
@@ -7645,8 +7645,7 @@ class TrabajadoresController extends \BaseController {
         return Response::make(file_get_contents($destination), 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="'.$name.'"'
-        ]);      
-		
+        ]);      		
     }
 
     /**
@@ -7882,6 +7881,7 @@ class TrabajadoresController extends \BaseController {
             'zona_id' => Input::get('zonaImpuestoUnico')['id'],
             'estadoUser' => Input::get('estadoUser')
         );
+        
         return $datos;
     }
 
