@@ -2978,7 +2978,7 @@ class TrabajadoresController extends \BaseController {
         $listaTrabajadores=array();
         if( $trabajadores->count() ){
             foreach( $trabajadores as $trabajador ){
-                $empleado = $trabajador->ultimaFicha();
+                $empleado = $trabajador->fichaTrabajadorUltima;
                 if($empleado){
                     //if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes || $empleado->estado=='En Creación' || $empleado->estado=='Finiquitado' && $empleado->fecha_finiquito >= $mes){
                         $listaTrabajadores[]=array(    
@@ -3002,7 +3002,8 @@ class TrabajadoresController extends \BaseController {
                             ),
                             'estado' => $empleado->estado,
                             'isContrato' => $trabajador->isContrato(),
-                            'isFicha' => $trabajador->ficha() ? true : false
+                            'isFicha' => $trabajador->ficha() ? true : false,
+                            'fechaFicha' => $trabajador->fechaFicha($empleado->fecha_ingreso)
                         );
                     //}
                 }
@@ -3315,6 +3316,7 @@ class TrabajadoresController extends \BaseController {
         $permisos = MenuSistema::obtenerPermisosAccesosURL(Auth::usuario()->user(), '#trabajadores-vacaciones');
         $mes = \Session::get('mesActivo');
         $empleado = $trabajador->ficha();
+        $feriados = Empresa::feriadosVacaciones();
         
         $trabajadorVacaciones = array(
             'id' => $trabajador->id,
@@ -3324,7 +3326,8 @@ class TrabajadoresController extends \BaseController {
             'nombreCompleto' => $trabajador->ficha()->nombreCompleto(),
             'vacacionesMesActual' => $trabajador->mesActualVacaciones(),
             'vacacionesIniciales' => $empleado->vacaciones,
-            'vacaciones' => $trabajador->miHistorialVacaciones()
+            'vacaciones' => $trabajador->miHistorialVacaciones(),
+            'feriados' => $feriados
         );
         
         $datos = array(
@@ -3462,21 +3465,23 @@ class TrabajadoresController extends \BaseController {
                 $empleado = $trabajador->ficha();
                 if($empleado){
                     if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes){
-                        $idTrabajador = $trabajador->id;
-                        $listaTrabajadores[]=array(
-                            'id' => $empleado->id,
-                            'sid' => $trabajador->sid,
-                            'rut' => $trabajador->rut,
-                            'rutFormato' => $trabajador->rut_formato(),
-                            'nombreCompleto' => $empleado->nombreCompleto(),
-                            'apellidos' => ucwords(strtolower($empleado->apellidos)),      
-                            'cargoOrden' => $empleado->cargo ? ucwords(strtolower($empleado->cargo->nombre)) : "",                         
-                            'cargo' => array(
-                                'id' => $empleado->cargo ? $empleado->cargo->id : "",
-                                'nombre' => $empleado->cargo ? $empleado->cargo->nombre : ""
-                            ),                                                
-                            'totalCertificados' => $trabajador->totalCertificados()
-                        );
+                        $totalCertificados = $trabajador->totalCertificados();
+                        if($totalCertificados){
+                            $listaTrabajadores[]=array(
+                                'id' => $empleado->id,
+                                'sid' => $trabajador->sid,
+                                'rut' => $trabajador->rut,
+                                'rutFormato' => $trabajador->rut_formato(),
+                                'nombreCompleto' => $empleado->nombreCompleto(),
+                                'apellidos' => ucwords(strtolower($empleado->apellidos)),      
+                                'cargoOrden' => $empleado->cargo ? ucwords(strtolower($empleado->cargo->nombre)) : "",                         
+                                'cargo' => array(
+                                    'id' => $empleado->cargo ? $empleado->cargo->id : "",
+                                    'nombre' => $empleado->cargo ? $empleado->cargo->nombre : ""
+                                ),                                                
+                                'totalCertificados' => $totalCertificados
+                            );
+                        }
                     }
                 }
             }
@@ -4851,7 +4856,6 @@ class TrabajadoresController extends \BaseController {
         $clausulas = $datos['clausulas'];
         $trabajador = Trabajador::whereSid($sidTrabajador)->first();
         $empleado = $trabajador->ficha();
-        $idTrabajador = $trabajador->id;
         $idEmpresa = \Session::get('empresa')->id;
         $empresa = Empresa::find($idEmpresa);
         
@@ -4988,7 +4992,6 @@ class TrabajadoresController extends \BaseController {
         $clausulas = $datos['clausulas'];
         $trabajador = Trabajador::whereSid($sidTrabajador)->first();
         $empleado = $trabajador->ficha();
-        $idTrabajador = $trabajador->id;
         $idEmpresa = \Session::get('empresa')->id;
         $empresa = Empresa::find($idEmpresa);
         
@@ -5575,7 +5578,7 @@ class TrabajadoresController extends \BaseController {
         $idMes = \Session::get('mesActivo')->id;  
         
         if(!$errores){
-            $fecha = MesDeTrabajo::find($idMes);
+            $fecha = $trabajador->fechaFicha($datos['fecha_ingreso']);
             $trabajador->sid = Funciones::generarSID();
             $trabajador->rut = $datos['rut'];            
             $trabajador->save();
@@ -5643,7 +5646,7 @@ class TrabajadoresController extends \BaseController {
             $ficha->monto_sindicato = $datos['monto_sindicato'];
             $ficha->zona_id = $datos['zona_id'];
             $ficha->estado = $datos['estado'];
-            $ficha->fecha = $fecha->mes;
+            $ficha->fecha = $fecha;
             
             if($ficha->estado=='Ingresado'){
                 $ficha->tramo_id = FichaTrabajador::calcularTramo(Funciones::convertir($datos['sueldo_base'], $datos['moneda_sueldo']));
@@ -5881,7 +5884,6 @@ class TrabajadoresController extends \BaseController {
                 $empleado = $trabajador->ficha();
                 if($empleado){
                     if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes || $empleado->estado=='Finiquitado' && $empleado->fecha_finiquito < $finMes && $empleado->fecha_finiquito >= $mesAnterior){
-                        $idTrabajador = $trabajador->id;
                         $atrasos = $trabajador->totalAtrasos();
                         if($atrasos['atrasos']){
                             $listaTrabajadores[] = array(
@@ -6099,16 +6101,18 @@ class TrabajadoresController extends \BaseController {
                 $empleado = $trabajador->ficha();
                 if($empleado){
                     if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes){
-                        $idTrabajador = $trabajador->id;
-                        $listaTrabajadores[] = array(
-                            'id' => $trabajador->id,
-                            'sid' => $trabajador->sid,
-                            'rutFormato' => $trabajador->rut_formato(),
-                            'rut' => $trabajador->rut,
-                            'apellidos' => ucwords(strtolower($empleado->apellidos)),
-                            'nombreCompleto' => $empleado->nombreCompleto(),
-                            'totalPrestamos' => $trabajador->totalPrestamos()
-                        );
+                        $totalPrestamos = $trabajador->totalPrestamos();
+                        if($totalPrestamos){
+                            $listaTrabajadores[] = array(
+                                'id' => $trabajador->id,
+                                'sid' => $trabajador->sid,
+                                'rutFormato' => $trabajador->rut_formato(),
+                                'rut' => $trabajador->rut,
+                                'apellidos' => ucwords(strtolower($empleado->apellidos)),
+                                'nombreCompleto' => $empleado->nombreCompleto(),
+                                'totalPrestamos' => $totalPrestamos
+                            );
+                        }
                     }
                 }
             }
@@ -6453,7 +6457,6 @@ class TrabajadoresController extends \BaseController {
         
         if($sid){
             $trabajador = Trabajador::whereSid($sid)->first();
-            $idTrabajador = $trabajador->id;            
             $empleado = $trabajador->ficha();
             $sueldoBase = $empleado->sueldo_base;
             if($empleado->moneda_sueldo=='$'){
@@ -7693,6 +7696,8 @@ class TrabajadoresController extends \BaseController {
         if($datos['estado']=='Ingresado'){   
             $ficha->tramo_id = FichaTrabajador::calcularTramo(Funciones::convertir($datos['sueldo_base'], $datos['moneda_sueldo']));
             if($ficha->estado==='En Creación'){
+                $fecha = $trabajador->fechaFicha($datos['fecha_ingreso']);
+                $ficha->fecha = $fecha;
                 $trabajador->calcularMisVacaciones($ficha->fecha_reconocimiento);
                 $trabajador->crearUser();
                 $ficha->tramo_id = FichaTrabajador::calcularTramo(Funciones::convertir($datos['sueldo_base'], $datos['moneda_sueldo']));         

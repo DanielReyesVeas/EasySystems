@@ -6,7 +6,7 @@ use GuzzleHttp\Client;
 //ini_set('display_errors', 'On');
 
 ini_set('max_execution_time', 30000);
-define('VERSION_SISTEMA', '1.7.3');
+define('VERSION_SISTEMA', '1.7.4');
 ini_set('memory_limit', '3048M');
 
 if(Config::get('cliente.LOCAL')){
@@ -615,6 +615,57 @@ Route::get('crear-factores', function(){
             }
         }
         
+    }else{
+        echo "Sin Empresas";
+    }
+});
+
+Route::get('clon', function(){
+
+    Config::set('database.default', 'principal' );
+    $empresas = Empresa::all();
+    
+    if($empresas->count()){
+        foreach($empresas as $empresa){
+            if($empresa->rut=='763025128'){
+                $trabajadores = array();
+                Config::set('database.default', $empresa->base_datos);
+                $trabajadores = Trabajador::all();
+                foreach($trabajadores as $trabajador){
+
+                    echo 'Trabajador : ' . $trabajador->rut . '<br />';
+                }
+            }
+        }        
+    }else{
+        echo "Sin Empresas";
+    }
+});
+
+Route::get('factores', function(){
+
+    Config::set('database.default', 'principal' );
+    $empresas = Empresa::all();
+    
+    if($empresas->count()){
+        foreach($empresas as $empresa){
+            echo '<br /><br /><h1>' . $empresa->razon_social . '</h1><br /><br />';
+            $horas = array();
+            Config::set('database.default', $empresa->base_datos);
+            $horas = HoraExtra::all();
+            foreach($horas as $hora){
+                if($hora->factor=='0.000000000'){
+                    $trab = $hora->trabajador;
+                    $ficha = $trab->ultimaFicha();
+                    echo '<br />' . $ficha->tipoJornada->nombre . '<br />';
+                    $tramos = $ficha->tipoJornada->jornadaTramo;
+                    echo $tramos[0]->tramo->factor . '<br />';
+                    echo $ficha->nombres . '<br />';
+                    $hora->factor = $tramos[0]->tramo->factor;
+                    $hora->save();
+                }
+            }
+        }        
     }else{
         echo "Sin Empresas";
     }
@@ -1393,7 +1444,10 @@ Route::group(array('before'=>'auth_ajax'), function() {
             $recargar=false;                        
             \Session::put('basedatos', $empresa->base_datos);
             Config::set('database.default', $empresa->base_datos);
+            $empresa->ultimoMes = $empresa->ultimoMes();
+            $empresa->primerMes = $empresa->primerMes();
             \Session::put('empresa', $empresa);
+            $a = \Session::get('empresa');
             Empresa::configuracion();
             $menuController = new MenuController();
             // se carga el menu con los permisos permitidos para la empresa
@@ -1425,11 +1479,12 @@ Route::group(array('before'=>'auth_ajax'), function() {
             
             $empresaActual = array(
                 'id' => $empresa->id,
+                'e' => $a,
                 'logo' => $empresa->logo? "/stories/".$empresa->logo : "images/dashboard/EMPRESAS.png",
                 'empresa' => $empresa->razon_social,
                 'mesDeTrabajo' => $mesActual,
-                'ultimoMes' => $empresa->ultimoMes(),
-                'primerMes' => $empresa->primerMes(),
+                'ultimoMes' => $empresa->ultimoMes,
+                'primerMes' => $empresa->primerMes,
                 'rutFormato' => $empresa->rut_formato(),
                 'rut' => $empresa->rut,
                 'direccion' => $empresa->direccion,
@@ -1628,7 +1683,8 @@ c139f46406b37dedd4062fea30a5ccec
             if($varSistema){
                 $listaMesesDeTrabajo=MesDeTrabajo::listaMesesDeTrabajo();
             }
-
+            $empresa->ultimoMes = $empresa->ultimoMes();
+            $empresa->primerMes = $empresa->primerMes();
             $mesActual = MesDeTrabajo::selectMes($mesActivo['id']);
             \Session::put('mesActivo', $mesActual);
             $fecha = \Session::get('mesActivo')->fechaRemuneracion;
@@ -1650,8 +1706,8 @@ c139f46406b37dedd4062fea30a5ccec
                 'success' => true,
                 'recargar' => true,
                 'mesActual' => $mesActual,
-                'ultimoMes' => $empresa->ultimoMes(),
-                'primerMes' => $empresa->primerMes(),
+                'ultimoMes' => $empresa->ultimoMes,
+                'primerMes' => $empresa->primerMes,
                 'uf' => $uf,
                 'utm' => $utm,
                 'uta' => $uta,
@@ -2174,7 +2230,9 @@ Route::post('login', function (){
                     Config::set('database.default', $empresa->base_datos);
                     $mesActual = MesDeTrabajo::selectMes();
                     \Session::put('basedatos', $empresa->base_datos);
-                    \Session::put('mesActivo', $mesActual);                                          
+                    \Session::put('mesActivo', $mesActual);     
+                    $empresa->ultimoMes = $empresa->ultimoMes();
+                    $empresa->primerMes = $empresa->primerMes();
                     \Session::put('empresa', $empresa);
                     Empresa::configuracion();
                     $MENU_USUARIO = $menuController->generarMenuSistema( $empresa_id, false );
@@ -2209,7 +2267,9 @@ Route::post('login', function (){
                     Config::set('database.default', $empresa->base_datos);
                     $mesActual = MesDeTrabajo::selectMes();
                     \Session::put('basedatos', $empresa->base_datos);
-                    \Session::put('mesActivo', $mesActual);  
+                    \Session::put('mesActivo', $mesActual); 
+                    $empresa->ultimoMes = $empresa->ultimoMes();
+                    $empresa->primerMes = $empresa->primerMes();
                     \Session::put('empresa', $empresa);
                     Empresa::configuracion();
                     \Session::put('mesActivo', $mesActual); 
@@ -2239,8 +2299,8 @@ Route::post('login', function (){
                     'logo' => $empresa->logo? "/stories/".$empresa->logo : "images/dashboard/EMPRESAS.png",
                     'empresa' => $empresa->razon_social,
                     'mesDeTrabajo' => $mesActual,
-                    'ultimoMes' => $empresa->ultimoMes(),
-                    'primerMes' => $empresa->primerMes(),
+                    'ultimoMes' => $empresa->ultimoMes,
+                    'primerMes' => $empresa->primerMes,
                     'rutFormato' => $empresa->rut_formato(),
                     'rut' => $empresa->rut,
                     'direccion' => $empresa->direccion,
@@ -2263,7 +2323,6 @@ Route::post('login', function (){
                         'domicilio' => $empresa->domicilio()
                     )
                 );
-
             }                        
 
             if(isset($mesActual)){

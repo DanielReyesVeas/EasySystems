@@ -1213,6 +1213,25 @@ CREATE TABLE IF NOT EXISTS `feriados` (
 
 -- --------------------------------------------------------
 
+
+--
+-- Estructura de tabla para la tabla `feriados`
+--
+
+CREATE TABLE IF NOT EXISTS `feriados_vacaciones` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sid` varchar(50) NOT NULL,
+  `anio_id` int(11) NOT NULL,
+  `fecha` date NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+
+-- --------------------------------------------------------
+
 --
 -- Estructura de tabla para la tabla `fichas_trabajadores`
 --

@@ -161,21 +161,34 @@ class VacacionesController extends \BaseController {
         return Response::json($respuesta);
     }
     
-    public function recalcularVacaciones($dias)
+    public function recalcularVacaciones()
     {
         $datos = Input::all();
         $sidTrabajador = $datos['sid'];
-        if($dias==null){
-            $dias = $datos['dias'];
-        }
+        $dias = $datos['dias'];
+        $desde = null;
+        $calcularDesde = $datos['desde'];
+
         $trabajador = Trabajador::whereSid($sidTrabajador)->first();
-        $trabajador->recalcularVacaciones($dias);
+        if($calcularDesde=='primerMesSistema'){
+            $primerMes = MesDeTrabajo::orderBy('mes')->first();
+            $desde = $primerMes->mes;
+            if($dias==0){
+                $dias = 1.25;   
+            }
+        }else{
+            if($dias==0){
+                $dias = $trabajador->diasInicialesVacaciones();   
+            }
+        }
+        $trabajador->recalcularVacaciones($dias, $desde);
         
         $ficha = $trabajador->ficha();
         Logs::crearLog('#trabajadores-vacaciones', $trabajador->id, $trabajador->rut_formato(), 'Recálculo', $trabajador->id, $ficha->nombreCompleto(), NULL, $dias, $dias);
         
         $datos = array(
-            'trabajador' => $trabajador
+            'trabajador' => $trabajador,
+            'desde' => $desde
         );
         
         return Response::json($datos);

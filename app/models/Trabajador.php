@@ -256,12 +256,33 @@ class Trabajador extends Eloquent {
     public function fichaAnual($anio)
     {
         $mes = $anio . '-12-01';
-        $idTrabajador = $this->id;
-        
+        $idTrabajador = $this->id;        
         $ficha = FichaTrabajador::where('trabajador_id', $idTrabajador)->where('fecha', '<=', $mes)->orderBy('fecha', 'DESC')->first();
         
         return $ficha;
-    } 
+    }
+    
+    public function fechaFicha($fecha)
+    {
+        $mes = \Session::get('mesActivo');
+        $empresa = \Session::get('empresa');
+        if($mes->mes > $fecha){
+            $primerMes = MesDeTrabajo::orderBy('mes')->first();            
+            if($primerMes->mes > $fecha){
+                $fecha = $primerMes->mes;
+            }else{
+                $m = date("m", strtotime($fecha));
+                $y = date("Y", strtotime($fecha));
+                $fecha = $y . '-' . $m . '-01';
+            }
+        }else{
+            $m = date("m", strtotime($fecha));
+            $y = date("Y", strtotime($fecha));
+            $fecha = $y . '-' . $m . '-01';
+        }
+
+        return $empresa;
+    }
     
     public function crearUser()
     {
@@ -406,7 +427,7 @@ class Trabajador extends Eloquent {
         $isCargas = false;
         $empleado = $this->ficha();
         $idTramo = $empleado->tramo_id;
-        $diasDescontados = $this->diasDescontados()['dias'];
+        $diasTrabajados = $this->diasTrabajados();
         $fecha = $mes->mes;
         if(!$mes->indicadores){
             $fecha = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($fecha)));
@@ -415,8 +436,8 @@ class Trabajador extends Eloquent {
             $tramo = AsignacionFamiliar::where('tramo', $idTramo)->where('mes', $fecha)->first();
             $monto = $tramo->monto;
             $monto = ( count($cargas) * $monto );
-            if((30 - $diasDescontados) < 25){
-                $monto = (($monto / 30) * $this->diasTrabajados());
+            if($diasTrabajados < 25){
+                $monto = (($monto / 30) * $diasTrabajados);
             }
             $isCargas = true;
         }
@@ -707,7 +728,7 @@ class Trabajador extends Eloquent {
             foreach( $trabajadores as $trabajador ){
                 $empleado = $trabajador->ficha();
                 if($empleado){
-                    if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes || $empleado->estado=='Finiquitado' && $empleado->fecha_finiquito < $finMesAnterior && $empleado->fecha_finiquito >= $mesAnterior){
+                    if($empleado->estado=='Ingresado' && $empleado->fecha_ingreso<=$finMes || $empleado->estado=='Finiquitado' && $empleado->fecha_finiquito < $finMes && $empleado->fecha_finiquito >= $mes->mes){
                         $listaTrabajadores[]=array(
                             'id' => $trabajador->id,
                             'sid' => $trabajador->sid,
@@ -769,19 +790,19 @@ class Trabajador extends Eloquent {
                             $monto = Funciones::convertir($haber->monto, $haber->moneda);                                        
                             if($haber->tipoHaber->id==2){
                                 if($diasTrabajados<25){
-                                    $diasDescontados = $this->diasDescontados()['dias'];
-                                    $monto = ($monto - (($monto / 30) * $diasDescontados));                       
+                                    $diasTrabajados = $this->diasTrabajados();
+                                    $monto = (($monto / 30) * $diasTrabajados);                       
                                 }
                             }else{
                                 if($haber->tipoHaber->nombre=='Colación' || $haber->tipoHaber->nombre=='Movilización' || $haber->tipoHaber->nombre=='Viático'){                                    
                                     if($haber->proporcional==1){
-                                        $diasDescontados = $this->diasDescontados()['dias'];
-                                        $monto = ($monto - (($monto / 30) * $diasDescontados)); 
+                                        $diasTrabajados = $this->diasTrabajados();
+                                        $monto = (($monto / 30) * $diasTrabajados); 
                                     }
                                 }else{
                                     if($haber->tipoHaber->proporcional_dias_trabajados){
-                                        $diasDescontados = $this->diasDescontados()['dias'];
-                                        $monto = ($monto - (($monto / 30) * $diasDescontados));                       
+                                        $diasTrabajados = $this->diasTrabajados();
+                                        $monto = (($monto / 30) * $diasTrabajados);                      
                                     }
                                 }
                             }
@@ -908,8 +929,8 @@ class Trabajador extends Eloquent {
                             $monto = Funciones::convertir($haber->monto, $haber->moneda);
 
                             if($haber->tipoHaber->proporcional_dias_trabajados){
-                                $diasDescontados = $this->diasDescontados()['dias'];
-                                $monto = ($monto - (($monto / 30) * $diasDescontados));
+                                $diasTrabajados = $this->diasTrabajados();
+                                $monto = (($monto / 30) * $diasTrabajados);  
                             }
                             
                             $listaHaberes[] = array(
@@ -1002,19 +1023,19 @@ class Trabajador extends Eloquent {
 
                             if($haber->tipoHaber->id==2){
                                 if($diasTrabajados<25){
-                                    $diasDescontados = $this->diasDescontados()['dias'];
-                                    $monto = ($monto - (($monto / 30) * $diasDescontados));                       
+                                    $diasTrabajados = $this->diasTrabajados();
+                                    $monto = (($monto / 30) * $diasTrabajados);                       
                                 }
                             }else{
                                 if($haber->tipoHaber->nombre=='Colación' || $haber->tipoHaber->nombre=='Movilización' || $haber->tipoHaber->nombre=='Viático'){                                    
                                     if($haber->proporcional==1){
-                                        $diasDescontados = $this->diasDescontados()['dias'];
-                                        $monto = ($monto - (($monto / 30) * $diasDescontados)); 
+                                        $diasTrabajados = $this->diasTrabajados();
+                                        $monto = (($monto / 30) * $diasTrabajados);   
                                     }
                                 }else{
                                     if($haber->tipoHaber->proporcional_dias_trabajados){
-                                        $diasDescontados = $this->diasDescontados()['dias'];
-                                        $monto = ($monto - (($monto / 30) * $diasDescontados));                       
+                                        $diasTrabajados = $this->diasTrabajados();
+                                        $monto = (($monto / 30) * $diasTrabajados);                     
                                     }
                                 }
                             }
@@ -1161,7 +1182,7 @@ class Trabajador extends Eloquent {
     {
         $listaVacaciones = array();
         $vacaciones = Vacaciones::where('trabajador_id', $this->id)->orderBy('mes')->get();
-        $mes = \Session::get('mesActivo')->mes;
+        $mes = \Session::get('mesActivo')->mes;        
         
         if($vacaciones->count()){
             foreach($vacaciones as $vacacion){
@@ -1209,6 +1230,21 @@ class Trabajador extends Eloquent {
         return;
     }
     
+    public function diasInicialesVacaciones()
+    {
+        $dias = 1.25;
+        $ficha = $this->ficha();
+        $m = date('m', strtotime('-' . 1 . ' month', strtotime($ficha->fecha_ingreso)));
+        $y = date('Y', strtotime('-' . 1 . ' month', strtotime($ficha->fecha_ingreso)));
+        $fecha = Funciones::obtenerFechaRemuneracionMes($m, $y);
+        $diasMes = (int) date('d', strtotime($fecha));
+        $diaIngreso = (( (int) date('d', strtotime($ficha->fecha_ingreso) )) - 1);
+        $diasTrabajados = ($diasMes - $diaIngreso);
+        $dias = (($dias / 30) * $diasTrabajados);
+        
+        return $dias;
+    }
+    
     public function recalcularVacaciones($dias, $desde=null)
     {
         $mes = \Session::get('mesActivo');
@@ -1217,10 +1253,10 @@ class Trabajador extends Eloquent {
         $fin = MesDeTrabajo::orderBy('mes', 'DESC')->first();
         
         if($desde){
-            $mesAnterior = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($desde)));
-            $dias = (Vacaciones::where('trabajador_id', $id)->where('mes', $mesAnterior)->first()['dias'] + 1.25);
+            /*$mesAnterior = date('Y-m-d', strtotime('-' . 1 . ' month', strtotime($desde)));
+            $dias = (Vacaciones::where('trabajador_id', $id)->where('mes', $mesAnterior)->first()['dias'] + 1.25);*/
             $inicio = $desde;
-            DB::table('vacaciones')->where('trabajador_id', $id)->where('mes', '>=', $desde)->delete();
+            DB::table('vacaciones')->where('trabajador_id', $id)->delete();
         }else{
             $inicio = $fichas['fecha_reconocimiento'];          
             DB::table('vacaciones')->where('trabajador_id', $id)->delete();
@@ -1234,6 +1270,7 @@ class Trabajador extends Eloquent {
             }
             $inicio = Funciones::primerDia($inicio);
             $this->recalcularMisVacaciones($inicio, $fin->mes, $dias);
+            
             return;
         }
         
@@ -1686,11 +1723,23 @@ class Trabajador extends Eloquent {
         $totalDiasLicencias = 0;
         $idMes = \Session::get('mesActivo')->id;
         $licencias = Licencia::where('trabajador_id', $this->id)->where('mes_id', $idMes)->get();
+        $ficha = $this->ficha();
         
         if($licencias->count()){
-            foreach($licencias as $licencia){
-                $totalDiasLicencias += $licencia->dias;
-            }
+            if($ficha->estado=='Finiquitado'){
+                $fechaFiniquito = $ficha->fecha_finiquito;
+                foreach($licencias as $licencia){
+                    if($fechaFiniquito > $licencia->hasta){
+                        $totalDiasLicencias += $licencia->dias;                    
+                    }else{
+                        
+                    }
+                }
+            }else{
+                foreach($licencias as $licencia){
+                    $totalDiasLicencias += $licencia->dias;
+                }
+            }   
         }
         
         return $totalDiasLicencias;
@@ -2197,10 +2246,11 @@ class Trabajador extends Eloquent {
         $licencias = $this->totalDiasLicencias();
         $licencias30 = $empresa->licencias_30 ? true : false;
         $ingreso30 = $empresa->ingresos_30 ? true : false;
-        $finiquito30 = $empresa->finiquitos_30 ? true : false;                
+        $finiquito30 = $empresa->finiquitos_30 ? true : false;    
+        $diasMes = (int) date('d', strtotime($mes->fechaRemuneracion));
 
         if($empleado->fecha_ingreso>$mes->mes){
-            $diasTrabajados = (int) date('d', strtotime($mes->fechaRemuneracion));
+            $diasTrabajados = $diasMes;
             $diaIngreso = (( (int) date('d', strtotime($empleado->fecha_ingreso) )) - 1);
             $diasTrabajados -= $diaIngreso;
         }
@@ -2212,6 +2262,10 @@ class Trabajador extends Eloquent {
                 $diaFiniquito = (int) date('d', strtotime($empleado->fecha_finiquito));
                 $diasTrabajados = $diaFiniquito;
             }
+        }
+        
+        if($licencias == $diasMes || $inasistencias == $diasMes){
+            return 0;
         }
         
         $diasTrabajados = ($diasTrabajados - $inasistencias - $licencias);
@@ -2699,8 +2753,8 @@ class Trabajador extends Eloquent {
                 }else{
                     if($this->totalDiasLicencias()){
                         if($todosImponibles > $valorTope && $diasTrabajados < 30){
-                            $diasDescontados = $this->diasDescontados()['dias'];
-                            $rentaImponible = ($valorTope - (($valorTope / 30) * $diasDescontados));
+                            $diasTrabajados = $this->diasTrabajados();
+                            $rentaImponible = (($valorTope / 30) * $diasTrabajados);
                         }else{
                             if($rentaImponible > $valorTope){
                                 $rentaImponible = $valorTope;
@@ -3075,8 +3129,8 @@ class Trabajador extends Eloquent {
             $totalColacion = Funciones::convertir($monto, $ficha->moneda_colacion);
             $diasTrabajados = $this->diasTrabajados();
             if($diasTrabajados < 30 && $proporcional==1){
-                $diasDescontados = $this->diasDescontados()['dias'];
-                $totalColacion = ($totalColacion - (($totalColacion / 30) * $diasDescontados));
+                $diasTrabajados = $this->diasTrabajados();
+                $totalColacion = (($totalColacion / 30) * $diasTrabajados);
             }
         }        
         
@@ -3166,8 +3220,8 @@ class Trabajador extends Eloquent {
                     if($cotizacionSalud == 'UF'){
                         $totalSalud = Funciones::convertirUF($empleado->monto_isapre);
                         if($empleado->estado=='Ingresado' && $diasTrabajados < 30 && !$empresa->salud_completa){
-                            $diasDescontados = $this->diasDescontados()['dias'];
-                            $totalSalud = ($totalSalud - (($totalSalud / 30) * $diasDescontados));
+                            $diasTrabajados = $this->diasTrabajados();
+                            $totalSalud = (($totalSalud / 30) * $diasTrabajados);
                         }
                         $adicional = ($totalSalud - $montoSalud);
                     }else if($cotizacionSalud == '7%'){
@@ -3177,8 +3231,8 @@ class Trabajador extends Eloquent {
                     }else if($cotizacionSalud == '7% + UF'){
                         $uf = Funciones::convertirUF($empleado->monto_isapre);
                         if($empleado->estado=='Ingresado' && $diasTrabajados < 30 && !$empresa->salud_completa){
-                            $diasDescontados = $this->diasDescontados()['dias'];
-                            $uf = ($uf - (($uf / 30) * $diasDescontados));
+                            $diasTrabajados = $this->diasTrabajados();
+                            $uf = (($uf / 30) * $diasTrabajados);
                         }
                         $base = round( $rentaImponible * 0.07 );
                         $totalSalud = ($base + $uf);
@@ -3186,8 +3240,8 @@ class Trabajador extends Eloquent {
                     }else{
                         $totalSalud = $empleado->monto_isapre;
                         if($empleado->estado=='Ingresado' && $diasTrabajados < 30 && !$empresa->salud_completa){
-                            $diasDescontados = $this->diasDescontados()['dias'];
-                            $totalSalud = ($totalSalud - (($totalSalud / 30) * $diasDescontados));
+                            $diasTrabajados = $this->diasTrabajados();
+                            $totalSalud = (($totalSalud / 30) * $diasTrabajados);
                         }
                         $adicional = ($totalSalud - $montoSalud);
                     }            
@@ -3508,8 +3562,8 @@ class Trabajador extends Eloquent {
                         $isSC = $rentaImponibleAnterior['isSC'];
                         $rentaImponibleEmpleador = $rentaImponible;
                         if($todosImponibles > $topeSeguroPesos && $diasTrabajados < 30){
-                            $diasDescontados = $this->diasDescontados()['dias'];
-                            $rentaImponible = ($topeSeguroPesos - (($topeSeguroPesos / 30) * $diasDescontados));
+                            $diasTrabajados = $this->diasTrabajados();
+                            $rentaImponible = (($topeSeguroPesos / 30) * $diasTrabajados);
                         }else{
                             if($rentaImponible > $topeSeguroPesos){
                                 $rentaImponible = $topeSeguroPesos;
@@ -3974,13 +4028,13 @@ class Trabajador extends Eloquent {
                         }  
                         if($proporcional['licencias']){
                             if($this->totalDiasLicencias()>0){
-                                $diasDescontados = $this->diasDescontados()['dias'];
-                                $gratificacion = ($gratificacion - (($gratificacion / 30) * $diasDescontados));
+                                $diasTrabajados = $this->diasTrabajados();
+                                $gratificacion = (($gratificacion / 30) * $diasTrabajados);
                             }
                         }else if($proporcional['inasistencias']){
                             if($this->totalInasistencias()>0){
-                                $diasDescontados = $this->diasDescontados()['dias'];
-                                $gratificacion = ($gratificacion - (($gratificacion / 30) * $diasDescontados));
+                                $diasTrabajados = $this->diasTrabajados();
+                                $gratificacion = (($gratificacion / 30) * $diasTrabajados);
                             }   
                         }
                     }else{

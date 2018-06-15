@@ -291,6 +291,24 @@ class Empresa extends \Eloquent {
         return $datos;
     }
     
+    static function feriadosVacaciones()
+    {
+        $feriados = FeriadoVacaciones::all();
+        $detalle = array();
+        
+        if($feriados->count()){
+            foreach($feriados as $feriado){
+                $detalle[] = array(
+                    'id' => $feriado->id,
+                    'sid' => $feriado->sid,
+                    'fecha' => $feriado->fecha
+                );
+            }    
+        }
+        
+        return $detalle;
+    }
+    
     static function isMutual()
     {       
         $empresa = \Session::get('empresa');
@@ -324,18 +342,15 @@ class Empresa extends \Eloquent {
     public function ultimoMes()
     {
         $datosMesDeTrabajo = new stdClass();          
-        $mesDeTrabajo = MesDeTrabajo::orderBy('mes', 'DESC')->first();
-        
+        $mesDeTrabajo = MesDeTrabajo::orderBy('mes', 'DESC')->first();  
         
         if($mesDeTrabajo){
             $datosMesDeTrabajo->id = $mesDeTrabajo->id;
-            //$datosMesDeTrabajo->mes = date('Y-m-d', strtotime('+' . 1 . ' month', strtotime($mesDeTrabajo->mes)));
             $datosMesDeTrabajo->mes = $mesDeTrabajo->mes;
             $datosMesDeTrabajo->mesActivo = $mesDeTrabajo->nombre . ' ' . $mesDeTrabajo->anioRemuneracion->anio;
             $datosMesDeTrabajo->nombre = $mesDeTrabajo->nombre;
             $datosMesDeTrabajo->idAnio = $mesDeTrabajo->anio_id;
             $datosMesDeTrabajo->anio = $mesDeTrabajo->anioRemuneracion->anio;
-            //$datosMesDeTrabajo->fechaRemuneracion = date('Y-m-d', strtotime('+' . 1 . ' month', strtotime($mesDeTrabajo->fecha_remuneracion)));
             $datosMesDeTrabajo->fechaRemuneracion = $mesDeTrabajo->fecha_remuneracion;
         }
         

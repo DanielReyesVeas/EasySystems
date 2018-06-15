@@ -48,15 +48,18 @@ class MesDeTrabajoController extends \BaseController {
         Config::set('database.default', $empresa->base_datos );
         $mes->indicadores = 1;
         $mes->save();
+        $mesActual = MesDeTrabajo::selectMes();
+        \Session::put('mesActivo', $mesActual);
+        $indicadores = ValorIndicador::valorFecha($mesActual->fechaRemuneracion);
         
         $respuesta = array(
             'success' => true,
             'mensaje' => "La Información fue actualizada correctamente",
-            'mes' => $mes->mes,
-            'a' => $mes->fecha_remuneracion
+            'mes' => $mesActual,
+            'indicadores' => $indicadores
         );
         
-    	return $respuesta;
+    	return Response::json($respuesta);
     }
 
     /**

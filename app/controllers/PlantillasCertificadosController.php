@@ -23,12 +23,14 @@ class PlantillasCertificadosController extends \BaseController {
             }
         }
         
+        $trabajadores = Trabajador::activosFiniquitados();
         
         $datos = array(
             'accesos' => array(
                 'ver' => true,
                 'editar' => true
             ),
+            'trabajadores' => $trabajadores,
             'datos' => $listaPlantillasCertificados
         );
         

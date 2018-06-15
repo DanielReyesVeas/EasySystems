@@ -125,27 +125,41 @@ class PrestamosController extends \BaseController {
      * @return Response
      */
     public function show($sid)
-    {
-        $prestamo = Prestamo::whereSid($sid)->first();
-
-        $datos=array(
-            'id' => $prestamo->id,
-            'sid' => $prestamo->sid,
-            //'fecha' => $prestamo->fecha,
-            'primeraCuota' => $prestamo->primera_cuota,
-            'glosa' => $prestamo->glosa,
-            'codigo' => $prestamo->codigo,
-            'nombreLiquidacion' => $prestamo->nombre_liquidacion,
-            'prestamoCaja' => $prestamo->prestamo_caja ? true : false,
-            'leassingCaja' => $prestamo->leassing_caja ? true : false,
-            'moneda' => $prestamo->moneda,
-            'monto' => $prestamo->monto,
-            'cuotas' => $prestamo->cuotas,
-            'primeraCuota' => $prestamo->primera_cuota,
-            'ultimaCuota' => $prestamo->ultima_cuota,
-            'trabajador' => $prestamo->trabajadorPrestamo(),
-            'detalleCuotas' => $prestamo->cuotasPrestamo()
+    {        
+        $permisos = MenuSistema::obtenerPermisosAccesosURL(Auth::usuario()->user(), '#ingreso-prestamos');
+        $datosPrestamo = null;
+        $trabajadores = array();
+        
+        if($sid){
+            $prestamo = Prestamo::whereSid($sid)->first();
+            $datosPrestamo=array(
+                'id' => $prestamo->id,
+                'sid' => $prestamo->sid,
+                //'fecha' => $prestamo->fecha,
+                'primeraCuota' => $prestamo->primera_cuota,
+                'glosa' => $prestamo->glosa,
+                'codigo' => $prestamo->codigo,
+                'nombreLiquidacion' => $prestamo->nombre_liquidacion,
+                'prestamoCaja' => $prestamo->prestamo_caja ? true : false,
+                'leassingCaja' => $prestamo->leassing_caja ? true : false,
+                'moneda' => $prestamo->moneda,
+                'monto' => $prestamo->monto,
+                'cuotas' => $prestamo->cuotas,
+                'primeraCuota' => $prestamo->primera_cuota,
+                'ultimaCuota' => $prestamo->ultima_cuota,
+                'trabajador' => $prestamo->trabajadorPrestamo(),
+                'detalleCuotas' => $prestamo->cuotasPrestamo()
+            );
+        }else{
+            $trabajadores = Trabajador::activosFiniquitados();
+        }
+        
+        $datos = array(
+            'accesos' => $permisos,
+            'datos' => $datosPrestamo,
+            'trabajadores' => $trabajadores
         );
+        
         return Response::json($datos);
     }
 
